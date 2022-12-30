@@ -94,6 +94,9 @@ local function is_dict(tbl)
   end)
 end
 
+---Translate each key of table (recursive)
+---@param dict table Dict-like table
+---@return table
 function M.trans_dict(dict)
   local trans_tbl = {}
   for key, cmd in pairs(dict) do
@@ -106,6 +109,9 @@ function M.trans_dict(dict)
   return vim.tbl_deep_extend('force', dict, trans_tbl)
 end
 
+---Translate each value of list
+---@param list table List-like table
+---@return table
 function M.trans_list(list)
   local trans_list = {}
   for _, str in ipairs(list) do
@@ -116,6 +122,7 @@ function M.trans_list(list)
   return vim.list_extend(list, trans_list)
 end
 
+---Remapping each CTRL sequence
 function M.remap_all_ctrl()
   local en_list = vim.split(config.default_layout, '', { plain = true })
   for _, char in ipairs(en_list) do
@@ -131,6 +138,7 @@ function M.remap_all_ctrl()
   end
 end
 
+---Remapping special keys like '.', ',', ':', ';' 
 function M.system_remap()
   local os = vim.loop.os_uname().sysname
 
