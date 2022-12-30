@@ -71,7 +71,9 @@ require('Langmapper').setup({
         ['<LOCALLEADER>'] = 'б',
         ['<LEADER>'] = false,
       },
-      ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
+      ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to.
+      ---It no really remap, but feeling like that :-) (See ## How it works)
+      ---WARNING: it will no work if you have not a function for get current layout on your system
       special_remap = {
         ['Ж'] = ':',
         ['ж'] = ';',
@@ -145,15 +147,18 @@ local window_mappings = mapper.trans_dict({
 })
 ```
 
+It will return a table with 'translated' keys and same values.
+
 ## How it works
 
 First: plugin make mapping for all combination with your layout with Ctrl. E.g., you have these layouts:
 
 - **ru** '...фисву...'
 - **en** '...abcde...'
-  Plugin get every char at 'en' and create mapping:
-  `vim.keymap.set({ '', '!', 't' }, '<C-' .. char_from_ru .. '>', '<C-' .. char_from_n .. '>')`.
-  It means what if neovim already has `'<C-' .. char_from_n .. '>'`, when you're typing same in your keyboard layout, will be trigger built-in functionality. Otherwise, nothing will just happen.
+
+Plugin get every char at 'en' and create mapping:
+`vim.keymap.set({ '', '!', 't' }, '<C-' .. char_from_ru .. '>', '<C-' .. char_from_n .. '>')`.
+It means what if neovim already has `'<C-' .. char_from_n .. '>'`, when you're typing same in your keyboard layout, will be trigger built-in functionality. Otherwise, nothing will just happen.
 
 Second: when you use `require('langmapper').map('i', 'jk', '<Esc>'), plugin make two bindings: for 'jk' and for relevant chars in fallback layout. (See `layouts[lang].leaders`)
 
