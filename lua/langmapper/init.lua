@@ -5,13 +5,13 @@ local map = vim.keymap.set
 
 local M = {}
 
----Setup mapper
+---Setup langmapper
 ---@param opts? table
 function M.setup(opts)
   config.update_config(opts)
 
   if config.config.map_all_ctrl then
-    u.set_ctrl()
+    u.remap_all_ctrl()
   end
 
   u.system_remap()
@@ -30,7 +30,7 @@ function M.map(mode, lhs, rhs, opts)
 
   -- Translate mapping for each langs in config.use_layouts
   for _, lang in ipairs(config.config.use_layouts) do
-    local tr_lhs = u.translate_keycode(lhs, config.config.layouts[lang].layout)
+    local tr_lhs = u.translate_keycode(lhs, config.config.layouts[lang])
     map(mode, tr_lhs, rhs, opts)
   end
 end

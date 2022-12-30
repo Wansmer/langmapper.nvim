@@ -1,20 +1,37 @@
 local M = {}
 
 M.config = {
-  ---@type table|nil
+  ---@type table|nil List of :map-arguments for using by default
   default_map_arguments = nil,
-  ---@type string
-  default_layout = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,.',
+  ---@type string Standart English layout
+  default_layout = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
   ---@type table
   layouts = {
     ---@type table
     ru = {
-      layout = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯфисвуапршолдьтщзйкыегмцчнябю',
+      --@type string Name of your second keyboard layout in system
       id = 'RussianWin',
+      layout = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯфисвуапршолдьтщзйкыегмцчня',
+      ---@type table Dictionary of pairs <leaderkeycode> and replacement
+      leaders = {
+        ---@type string|boolean Every <keycode> must be in uppercase
+        ['<LOCALLEADER>'] = 'б',
+        ['<LEADER>'] = false,
+      },
+      ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
+      special_remap = {
+        [':'] = 'Ж',
+        [';'] = 'ж',
+        ['/'] = '.',
+        ['?'] = ',',
+      },
     },
   },
+  ---@type string[] If empty, will remapping for all defaults layouts
+  use_layouts = {},
   os = {
     Darwin = {
+      ---Function for getting current keyboard layout on your device
       ---Should return string with id of layouts
       ---@return string
       get_current_layout_id = function()
@@ -28,27 +45,12 @@ M.config = {
       end,
     },
   },
-  ---@type string[] If empty, will remapping for all defaults layouts
-  use_layouts = {},
-  ---@type boolean
+  ---@type boolean Add mapping for every CTRL+ binding or not. Using for remaps CTRL's neovim mappings by default.
   map_all_ctrl = true,
-  force_replace = {
-    ---@type string|boolean Every <keycode> must be in uppercase
-    ['<LOCALLEADER>'] = 'б',
-    ---@type string|boolean Every <keycode> must be in uppercase
-    ['<LEADER>'] = false,
-  },
-  ---@type table
-  system_remap = {
-    ru = {
-      [':'] = 'Ж',
-      [';'] = 'ж',
-      ['/'] = '.',
-      ['?'] = ',',
-    },
-  },
 }
 
+---Update configuration
+---@param opts table|nil
 function M.update_config(opts)
   opts = opts or {}
   M.config.use_layouts = vim.tbl_keys(M.config.layouts)
