@@ -32,7 +32,7 @@ function M.translate_keycode(lhs, lang, base_layout)
   ---@param char string
   ---@param flag boolean Checking if char inside < .. >
   ---@param ms string Checking if char inside mod keys (CTRL, ALT, META)
-  ---@return [TODO:return]
+  ---@return string
   local function process_char(char, flag, ms)
     local tr = vim.fn.tr
     local tr_char = tr(char, base_layout, lang.layout)
@@ -138,7 +138,32 @@ function M.remap_all_ctrl()
   end
 end
 
----Remapping special keys like '.', ',', ':', ';' 
+---Collect all special keys
+---@return table
+local function collect_all_specials()
+  local spec = {}
+  for _, lang in ipairs(config.use_layouts) do
+    spec = vim.tbl_flatten({
+      spec,
+      vim.tbl_keys(config.layouts[lang].special_remap),
+    })
+  end
+  return spec
+end
+
+---Get lang object by keyboard layout id
+---@param id string
+---@return table
+local function get_lang_by_id(id)
+  for _, lang in ipairs(config.use_layouts) do
+    if config.layouts[lang].id == id then
+      return config.layouts[lang]
+    end
+  end
+  return nil
+end
+
+---Remapping special keys like '.', ',', ':', ';'
 function M.system_remap()
   local os = vim.loop.os_uname().sysname
 
@@ -146,26 +171,24 @@ function M.system_remap()
     return
   end
 
-  local get_layout_id = config.os[os].get_current_layout_id
+  local ns = vim.api.nvim_create_namespace('langmapper')
+  local spec_list = collect_all_specials()
+  vim.on_key(function(char)
+    local mode = vim.fn.mode()
+    local key = vim.fn.keytrans(char)
+    if mode == 'n' and vim.tbl_contains(spec_list, key) then
+      local get_layout_id = config.os[os].get_current_layout_id
 
-  if get_layout_id and type(get_layout_id) == 'function' then
-    local function feed_special(keycode, layout_id)
-      return function()
-        local layout = get_layout_id()
-        if layout == layout_id then
-          vim.api.nvim_feedkeys(keycode, 'n', true)
+      if get_layout_id and type(get_layout_id) == 'function' then
+        local layout_id = get_layout_id()
+        local lang = get_lang_by_id(layout_id)
+        if lang then
+          print('Feed: ', key, lang.special_remap[key])
+          vim.api.nvim_feedkeys(lang.special_remap[key], 'n', true)
         end
       end
     end
-
-    for _, lang in ipairs(config.use_layouts) do
-      local special_remap = config.layouts[lang].special_remap
-      local id = config.layouts[lang].id
-      for key, remap in pairs(special_remap) do
-        vim.keymap.set('n', remap, feed_special(key, id))
-      end
-    end
-  end
+  end, ns)
 end
 
 return M

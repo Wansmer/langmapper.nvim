@@ -20,12 +20,12 @@ M.config = {
       },
       ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
       special_remap = {
-        [':'] = 'Ж',
-        [';'] = 'ж',
-        ['/'] = '.',
-        ['?'] = ',',
-        ['.'] = 'ю',
-        [','] = 'б',
+        ['Ж'] = ':',
+        ['ж'] = ';',
+        ['.'] = '/',
+        [','] = '?',
+        ['ю'] = '>',
+        ['б'] = ',',
       },
     },
   },
