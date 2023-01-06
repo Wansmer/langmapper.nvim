@@ -177,6 +177,7 @@ function M.system_remap()
     local function feed_special(rhs, lhs, layout_id)
       return function()
         local layout = get_layout_id()
+        print('Layout: ', layout)
         if layout == layout_id then
           vim.api.nvim_feedkeys(rhs, 'n', true)
         else
@@ -189,7 +190,13 @@ function M.system_remap()
       local special_remap = config.layouts[lang].special_remap
       local id = config.layouts[lang].id
       for lhs, rhs in pairs(special_remap) do
-        vim.keymap.set('n', lhs, feed_special(rhs, lhs, id))
+        local desc = 'Remaps with langmapper for nvim_feedkeys( %s )'
+        vim.keymap.set(
+          'n',
+          lhs,
+          feed_special(rhs, lhs, id),
+          { desc = desc:format(rhs) }
+        )
       end
     end
   end

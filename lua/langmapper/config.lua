@@ -10,7 +10,7 @@ M.config = {
     ---@type table
     ru = {
       --@type string Name of your second keyboard layout in system
-      id = 'RussianWin',
+      id = 'com.apple.keylayout.RussianWin',
       layout = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯфисвуапршолдьтщзйкыегмцчня',
       ---@type table Dictionary of pairs <leaderkeycode> and replacement
       leaders = {
@@ -24,7 +24,7 @@ M.config = {
         ['ж'] = ';',
         ['.'] = '/',
         [','] = '?',
-        ['ю'] = '>',
+        ['ю'] = '.',
         ['б'] = ',',
         ['э'] = "'",
         ['Э'] = '"',
@@ -39,13 +39,10 @@ M.config = {
       ---Should return string with id of layouts
       ---@return string
       get_current_layout_id = function()
-        local keyboar_key = '"KeyboardLayout Name"'
-        local cmd = 'defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources | rg -w '
-          .. keyboar_key
-        local output = vim.fn.system(cmd)
-        local cur_layout =
-          vim.trim(output:match('%"KeyboardLayout Name%" = (%a+);'))
-        return cur_layout
+        local cmd =
+          'defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleCurrentKeyboardLayoutInputSourceID'
+        local output = vim.split(vim.trim(vim.fn.system(cmd)), '\n')
+        return output[#output]
       end,
     },
   },
