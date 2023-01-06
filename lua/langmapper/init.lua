@@ -14,7 +14,9 @@ function M.setup(opts)
     u.remap_all_ctrl()
   end
 
-  u.system_remap()
+  if config.try_map_specials then
+    u.system_remap()
+  end
 end
 
 ---Wrapper of vim.keymap.set with same contract
