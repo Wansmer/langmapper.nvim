@@ -8,8 +8,8 @@ Here is another attempt to do it more comfortable.
 This plugin – a wrapper of standard `vim.keymap.set` and little more:
 
 - **Remaps to your layout all built-in CTRL sequences (all what manage neovim, not system)**
-- **Allow using your lovely keys at same places in normal mode: e.g., ':', ';' e.t.c.**
-- **Checking your current system keyboard layout (if you set it)**
+- **Allow using your lovely keys at same places in normal mode: e.g., ':', ';' e.t.c.** (experemental)
+- **Checking your current system keyboard layout** (only on MacOS by default)
 
 > _⚡Disclaimer: The plugin is under active development. I tested it only on Mac and only with russian keyboard layout. PR are welcome_
 
