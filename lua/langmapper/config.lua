@@ -52,7 +52,7 @@ M.config = {
   ---@type boolean Add mapping for every CTRL+ binding or not. Using for remaps CTRL's neovim mappings by default.
   map_all_ctrl = true,
   -- WARNING: Very experemental. No works good yet
-  try_map_specials = false,
+  try_map_specials = true,
 }
 
 ---Update configuration

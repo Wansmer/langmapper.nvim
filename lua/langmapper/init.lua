@@ -14,7 +14,7 @@ function M.setup(opts)
     u.remap_all_ctrl()
   end
 
-  if config.try_map_specials then
+  if config.config.try_map_specials then
     u.system_remap()
   end
 end

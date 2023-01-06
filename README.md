@@ -1,6 +1,7 @@
 # Langmapper.nvim - another attempt to make neovim friends with other keyboard layouts
 
 > _⚡Disclaimer: The plugin is under active development. I tested it only on Mac and only with russian keyboard layout. PR are welcome_
+
 > _It is very experimental_
 
 Motivation: vim and neovim historically no friends with keyboard layouts other than English. It is not bad, when you're only coding, but if you work with text on other languages – it is very uncomfortable.
