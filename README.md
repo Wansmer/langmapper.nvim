@@ -20,7 +20,7 @@ This plugin – a wrapper of standard `vim.keymap.set` and little more:
 
 ## Instalation
 
-Plugin manage only mappings what mapped with `require('langmapper').map`, built-in CTRL's and specials chars from `layouts[lang].special_remap`. For using movement keys be
+Plugin manages only mappings what mapped with `require('langmapper').map`, built-in CTRL's and specials chars from `layouts[lang].special_remap`. For using movement keys be
 sure what you have `vim.opt.langmap`.
 
 For work, plugin should be loaded before you set your mappings. Best way did it – no use lazy loaded and require before mappings.
@@ -74,6 +74,7 @@ require('Langmapper').setup({
       ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to.
       ---It no really remap, but feeling like that :-) (See ## How it works)
       ---WARNING: it will no work if you have not a function for get current layout on your system
+      ---DOUBLE WARNING: it is works not enough good
       special_remap = {
         ['Ж'] = ':',
         ['ж'] = ';',
@@ -104,6 +105,8 @@ require('Langmapper').setup({
   },
   ---@type boolean Add mapping for every CTRL+ binding or not. Using for remaps CTRL's neovim mappings by default.
   map_all_ctrl = true,
+  -- WARNING: Very experemental. No works good yet
+  try_map_specials = false,
 })
 ```
 
