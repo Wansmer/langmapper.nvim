@@ -153,7 +153,7 @@ end
 
 ---Get lang object by keyboard layout id
 ---@param id string
----@return table
+---@return table|nil
 local function get_lang_by_id(id)
   for _, lang in ipairs(config.use_layouts) do
     if config.layouts[lang].id == id then
@@ -173,6 +173,7 @@ function M.system_remap()
 
   local ns = vim.api.nvim_create_namespace('langmapper')
   local spec_list = collect_all_specials()
+
   vim.on_key(function(char)
     local mode = vim.fn.mode()
     local key = vim.fn.keytrans(char)
@@ -183,7 +184,6 @@ function M.system_remap()
         local layout_id = get_layout_id()
         local lang = get_lang_by_id(layout_id)
         if lang then
-          print('Feed: ', key, lang.special_remap[key])
           vim.api.nvim_feedkeys(lang.special_remap[key], 'n', true)
         end
       end
