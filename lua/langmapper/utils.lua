@@ -174,21 +174,28 @@ function M.system_remap()
   local ns = vim.api.nvim_create_namespace('langmapper')
   local spec_list = collect_all_specials()
 
-  vim.on_key(function(char)
-    local mode = vim.fn.mode()
-    local key = vim.fn.keytrans(char)
-    if mode == 'n' and vim.tbl_contains(spec_list, key) then
-      local get_layout_id = config.os[os].get_current_layout_id
+  local get_layout_id = config.os[os].get_current_layout_id
 
-      if get_layout_id and type(get_layout_id) == 'function' then
-        local layout_id = get_layout_id()
-        local lang = get_lang_by_id(layout_id)
-        if lang then
-          vim.api.nvim_feedkeys(lang.special_remap[key], 'n', true)
+  if get_layout_id and type(get_layout_id) == 'function' then
+    local function feed_special(realpress, keycode, layout_id)
+      return function()
+        local layout = get_layout_id()
+        if layout == layout_id then
+          vim.api.nvim_feedkeys(realpress, 'n', true)
+        else
+          vim.api.nvim_feedkeys(keycode, 'n', true)
         end
       end
     end
-  end, ns)
+
+    for _, lang in ipairs(config.use_layouts) do
+      local special_remap = config.layouts[lang].special_remap
+      local id = config.layouts[lang].id
+      for key, remap in pairs(special_remap) do
+        vim.keymap.set('n', key, feed_special(remap, key, id))
+      end
+    end
+  end
 end
 
 return M
