@@ -1,5 +1,8 @@
 # Langmapper.nvim - another attempt to make neovim friends with other keyboard layouts
 
+> _⚡Disclaimer: The plugin is under active development. I tested it only on Mac and only with russian keyboard layout. PR are welcome_
+> _It is very experimental_
+
 Motivation: vim and neovim historically no friends with keyboard layouts other than English. It is not bad, when you're only coding, but if you work with text on other languages – it is very uncomfortable.
 Yes, we have `langmap` and `langremap` but it no work with all mapping what we want.
 
@@ -8,10 +11,8 @@ Here is another attempt to do it more comfortable.
 This plugin – a wrapper of standard `vim.keymap.set` and little more:
 
 - **Remaps to your layout all built-in CTRL sequences (all what manage neovim, not system)**
-- **Allow using your lovely keys at same places in normal mode: e.g., ':', ';' e.t.c.** (experemental)
+- **Allow using your lovely keys at same places in normal mode: e.g., ':', ';' e.t.c.** (experimental)
 - **Checking your current system keyboard layout** (only on MacOS by default)
-
-> _⚡Disclaimer: The plugin is under active development. I tested it only on Mac and only with russian keyboard layout. PR are welcome_
 
 ## Requirements
 
@@ -105,7 +106,7 @@ require('Langmapper').setup({
   },
   ---@type boolean Add mapping for every CTRL+ binding or not. Using for remaps CTRL's neovim mappings by default.
   map_all_ctrl = true,
-  -- WARNING: Very experemental. No works good yet
+  -- WARNING: Very experimental. No works good yet
   try_map_specials = false,
 })
 ```
