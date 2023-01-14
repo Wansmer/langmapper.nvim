@@ -177,7 +177,6 @@ function M.system_remap()
     local function feed_special(rhs, lhs, layout_id)
       return function()
         local layout = get_layout_id()
-        print('Layout: ', layout)
         if layout == layout_id then
           vim.api.nvim_feedkeys(rhs, 'n', true)
         else
