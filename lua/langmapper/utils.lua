@@ -163,6 +163,18 @@ local function get_lang_by_id(id)
   return nil
 end
 
+---Checking if rhs was remapped. Return mode for feedkeys()
+---If rhs was remapped by langmapper, use default nvim behavior (mode n)
+---@param rhs string
+---@return string
+local function get_maparg(rhs)
+  local arg = vim.fn.maparg(rhs, 'n')
+  if arg == '' or arg:match('langmapper') then
+    return 'n'
+  end
+  return 'm'
+end
+
 ---Remapping special keys like '.', ',', ':', ';'
 function M.system_remap()
   local os = vim.loop.os_uname().sysname
@@ -174,15 +186,18 @@ function M.system_remap()
   local get_layout_id = config.os[os].get_current_layout_id
 
   if get_layout_id and type(get_layout_id) == 'function' then
-    local function feed_special(rhs, lhs, layout_id)
+    local function feed_special(rhs_set, lhs, layout_id)
       return function()
-        local layout = get_layout_id()
+        local rhs = rhs_set.rhs
+        if rhs_set.check_layout then
+          local layout = get_layout_id()
 
-        if layout ~= layout_id then
-          rhs = lhs
+          if layout ~= layout_id then
+            rhs = lhs
+          end
         end
 
-        local feed_mode = vim.fn.maparg(rhs, 'n') == '' and 'n' or 'm'
+        local feed_mode = rhs_set.feed_mode or get_maparg(rhs)
 
         vim.api.nvim_feedkeys(rhs, feed_mode, true)
       end
@@ -192,10 +207,10 @@ function M.system_remap()
       local special_remap = config.layouts[lang].special_remap
       local id = config.layouts[lang].id
 
-      for lhs, rhs in pairs(special_remap) do
+      for lhs, rhs_set in pairs(special_remap) do
         local desc = 'Remaps with langmapper for nvim_feedkeys( %s )'
-        vim.keymap.set('n', lhs, feed_special(rhs, lhs, id), {
-          desc = desc:format(rhs),
+        vim.keymap.set('n', lhs, feed_special(rhs_set, lhs, id), {
+          desc = desc:format(rhs_set.rhs),
           nowait = true,
         })
       end
