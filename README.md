@@ -65,7 +65,7 @@ require('Langmapper').setup({
     ---@type table
     ru = {
       --@type string Name of your second keyboard layout in system
-      id = 'RussianWin',
+      id = 'com.apple.keylayout.RussianWin',
       layout = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯфисвуапршолдьтщзйкыегмцчня',
       ---@type table Dictionary of pairs <leaderkeycode> and replacement
       leaders = {

@@ -23,9 +23,9 @@ M.config = {
       ---DOUBLE WARNING: it is works not enough good
       ---rhs: normal mode command to execute
       ---feed_mode:
-      ---  n - use nvim-default behavior,
-      ---  m - use remapping behavior if key was remmaping by user or another plugin
-      ---  (for more info and variants see :h feedkeys())
+      ---  n - use nvim-default behavior (like remap = false)
+      ---  m - use remapping behavior if key was remmaping by user or another plugin (like remap = true)
+      ---  (for more info see :h feedkeys(). Here use only n and m)
       ---check_layout: this causes a delay because checking the current input method is an expensive operation
       special_remap = {
         ['.'] = { rhs = '/', feed_mode = nil, check_layout = true },
