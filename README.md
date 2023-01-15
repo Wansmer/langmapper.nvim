@@ -73,17 +73,29 @@ require('Langmapper').setup({
         ['<LOCALLEADER>'] = 'б',
         ['<LEADER>'] = false,
       },
-      ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to.
-      ---It no really remap, but feeling like that :-) (See ## How it works)
+
+      ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
       ---WARNING: it will no work if you have not a function for get current layout on your system
       ---DOUBLE WARNING: it is works not enough good
+      ---rhs: normal mode command to execute
+      ---feed_mode:
+      ---  n - use nvim-default behavior,
+      ---  m - use remapping behavior if key was remmaping by user or another plugin
+      ---  (for more info and variants see :h feedkeys())
+      ---check_layout: this causes a delay because checking the current input method is an expensive operation
       special_remap = {
-        ['Ж'] = ':',
-        ['ж'] = ';',
-        ['.'] = '/',
-        [','] = '?',
-        ['ю'] = '>',
-        ['б'] = ',',
+        ['.'] = { rhs = '/', feed_mode = nil, check_layout = true },
+        [','] = { rhs = '?', feed_mode = nil, check_layout = true },
+        ['Ж'] = { rhs = ':', feed_mode = nil, check_layout = false },
+        ['ж'] = { rhs = ';', feed_mode = nil, check_layout = false },
+        ['ю'] = { rhs = '.', feed_mode = nil, check_layout = false },
+        ['б'] = { rhs = ',', feed_mode = nil, check_layout = false },
+        ['э'] = { rhs = "'", feed_mode = nil, check_layout = false },
+        ['Э'] = { rhs = '"', feed_mode = nil, check_layout = false },
+        ['х'] = { rhs = '[', feed_mode = nil, check_layout = false },
+        ['ъ'] = { rhs = ']', feed_mode = nil, check_layout = false },
+        ['Х'] = { rhs = '{', feed_mode = nil, check_layout = false },
+        ['Ъ'] = { rhs = '}', feed_mode = nil, check_layout = false },
       },
     },
   },
@@ -96,19 +108,17 @@ require('Langmapper').setup({
       ---Should return string with id of layouts
       ---@return string
       get_current_layout_id = function()
-        local keyboar_key = '"KeyboardLayout Name"'
-        local cmd = 'defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources | rg -w ' .. keyboar_key
-        local output = vim.fn.system(cmd)
-        local cur_layout =
-          vim.trim(output:match('%"KeyboardLayout Name%" = (%a+);'))
-        return cur_layout
+        local cmd =
+          'defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleCurrentKeyboardLayoutInputSourceID'
+        local output = vim.split(vim.trim(vim.fn.system(cmd)), '\n')
+        return output[#output]
       end,
     },
   },
   ---@type boolean Add mapping for every CTRL+ binding or not. Using for remaps CTRL's neovim mappings by default.
   map_all_ctrl = true,
   -- WARNING: Very experimental. No works good yet
-  try_map_specials = false,
+  try_map_specials = true,
 })
 ```
 
@@ -169,5 +179,5 @@ Second: when you use `require('langmapper').map('i', 'jk', '<Esc>'), plugin make
 
 When <leader> or <localleader> must be changed to real symbol – plugin do it.
 
-Third: When you're pressing key, where in English keyboard places dot (for example), you expect what a dot-functionality will be to happen, but in your current layout is not dot :-(
-Plugin listen all you key-pressing in normal mode, and if you press dot-key – it runs `vim.api.nvim_feedkeys('.', 'n', true)` and dot-functionality happens, no matter what the layout is now. (See `layouts[lang].special_remap`)
+Third: When you're pressing key, where in English keyboard locate dot (for example), you expect what a dot-functionality will be to happen, but in your current layout is not dot :-(
+Example with Russian layout: I'm pressing key when in English layout locate `/` (slash), but in Russian layout locate `.` (dot). I don't want to keep in mind which current input method. All what I want – get standard `/` functionality (because I'm used to that in this place on the keyboard it is a slash). Plugin check current keyboard layout and if it 'Ru' - send needed key to typeahead buffer (`/` instead `.`). But if current input method is 'En' - plugin send dot.
