@@ -138,31 +138,6 @@ function M.remap_all_ctrl()
   end
 end
 
----Collect all special keys
----@return table
-local function collect_all_specials()
-  local spec = {}
-  for _, lang in ipairs(config.use_layouts) do
-    spec = vim.tbl_flatten({
-      spec,
-      vim.tbl_keys(config.layouts[lang].special_remap),
-    })
-  end
-  return spec
-end
-
----Get lang object by keyboard layout id
----@param id string
----@return table|nil
-local function get_lang_by_id(id)
-  for _, lang in ipairs(config.use_layouts) do
-    if config.layouts[lang].id == id then
-      return config.layouts[lang]
-    end
-  end
-  return nil
-end
-
 ---Checking if rhs was remapped. Return mode for feedkeys()
 ---If rhs was remapped by langmapper, use default nvim behavior (mode n)
 ---@param rhs string
