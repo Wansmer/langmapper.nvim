@@ -33,7 +33,9 @@ function M.map(mode, lhs, rhs, opts)
   -- Translate mapping for each langs in config.use_layouts
   for _, lang in ipairs(config.config.use_layouts) do
     local tr_lhs = u.translate_keycode(lhs, config.config.layouts[lang])
-    map(mode, tr_lhs, rhs, opts)
+    if tr_lhs ~= lhs then
+      map(mode, tr_lhs, rhs, opts)
+    end
   end
 end
 
