@@ -124,8 +124,8 @@ end
 
 ---Remapping each CTRL sequence
 function M.remap_all_ctrl()
-  local en_list = vim.split(config.default_layout, '', { plain = true })
-  for _, char in ipairs(en_list) do
+  local en_list = vim.split(config.default_layout:lower(), '', { plain = true })
+  for _, char in ipairs(vim.fn.uniq(en_list)) do
     local modes = { '', '!', 't' }
     local keycode = '<C-' .. char .. '>'
 
