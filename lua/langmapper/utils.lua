@@ -1,4 +1,4 @@
-local config = require('langmapper.config').config
+local c = require('langmapper.config')
 local M = {}
 
 local function _update_flag(char, flag)
@@ -17,7 +17,7 @@ end
 ---@param base_layout? string Base layout
 ---@return string
 function M.translate_keycode(lhs, lang, base_layout)
-  base_layout = base_layout or config.default_layout
+  base_layout = base_layout or c.config.default_layout
   local seq = vim.split(lhs, '', { plain = true })
   local trans_seq = {}
   local mod_seq = ''
@@ -100,8 +100,8 @@ end
 function M.trans_dict(dict)
   local trans_tbl = {}
   for key, cmd in pairs(dict) do
-    for _, lang in ipairs(config.use_layouts) do
-      trans_tbl[M.translate_keycode(key, config.layouts[lang])] = is_dict(cmd)
+    for _, lang in ipairs(c.config.use_layouts) do
+      trans_tbl[M.translate_keycode(key, c.config.layouts[lang])] = is_dict(cmd)
           and M.trans_dict(cmd)
         or cmd
     end
@@ -115,8 +115,8 @@ end
 function M.trans_list(list)
   local trans_list = {}
   for _, str in ipairs(list) do
-    for _, lang in ipairs(config.use_layouts) do
-      table.insert(trans_list, M.translate_keycode(str, config.layouts[lang]))
+    for _, lang in ipairs(c.config.use_layouts) do
+      table.insert(trans_list, M.translate_keycode(str, c.config.layouts[lang]))
     end
   end
   return vim.list_extend(list, trans_list)
@@ -124,16 +124,22 @@ end
 
 ---Remapping each CTRL sequence
 function M.remap_all_ctrl()
-  local en_list = vim.split(config.default_layout:lower(), '', { plain = true })
+  local en_list =
+    vim.split(c.config.default_layout:lower(), '', { plain = true })
+
   for _, char in ipairs(vim.fn.uniq(en_list)) do
     local modes = { '', '!', 't' }
     local keycode = '<C-' .. char .. '>'
 
-    for _, lang in ipairs(config.use_layouts) do
+    for _, lang in ipairs(c.config.use_layouts) do
       local tr_keycode = '<C-'
-        .. vim.fn.tr(char, config.default_layout, config.layouts[lang].layout)
+        .. vim.fn.tr(
+          char,
+          c.config.default_layout,
+          c.config.layouts[lang].layout
+        )
         .. '>'
-      vim.keymap.set(modes, tr_keycode, keycode)
+      vim.keymap.set(modes, tr_keycode, keycode, { remap = true })
     end
   end
 end
@@ -154,11 +160,11 @@ end
 function M.system_remap()
   local os = vim.loop.os_uname().sysname
 
-  if not config.os[os] then
+  if not c.config.os[os] then
     return
   end
 
-  local get_layout_id = config.os[os].get_current_layout_id
+  local get_layout_id = c.config.os[os].get_current_layout_id
 
   if get_layout_id and type(get_layout_id) == 'function' then
     local function feed_special(rhs_set, lhs, layout_id)
@@ -178,9 +184,9 @@ function M.system_remap()
       end
     end
 
-    for _, lang in ipairs(config.use_layouts) do
-      local special_remap = config.layouts[lang].special_remap
-      local id = config.layouts[lang].id
+    for _, lang in ipairs(c.config.use_layouts) do
+      local special_remap = c.config.layouts[lang].special_remap
+      local id = c.config.layouts[lang].id
 
       for lhs, rhs_set in pairs(special_remap) do
         local desc = 'Remaps with langmapper for nvim_feedkeys( %s )'
