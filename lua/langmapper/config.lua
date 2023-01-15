@@ -19,19 +19,27 @@ M.config = {
         ['<LEADER>'] = false,
       },
       ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
+      ---WARNING: it will no work if you have not a function for get current layout on your system
+      ---DOUBLE WARNING: it is works not enough good
+      ---rhs: normal mode command to execute
+      ---feed_mode:
+      ---  n - use nvim-default behavior,
+      ---  m - use remapping behavior if key was remmaping by user or another plugin
+      ---  (for more info and variants see :h feedkeys())
+      ---check_layout: this causes a delay because checking the current input method is an expensive operation
       special_remap = {
-        ['Ж'] = ':',
-        ['ж'] = ';',
-        ['.'] = '/',
-        [','] = '?',
-        ['ю'] = '.',
-        ['б'] = ',',
-        ['э'] = "'",
-        ['Э'] = '"',
-        ['х'] = '[',
-        ['ъ'] = ']',
-        ['Х'] = '{',
-        ['Ъ'] = '}',
+        ['.'] = { rhs = '/', feed_mode = nil, check_layout = true },
+        [','] = { rhs = '?', feed_mode = nil, check_layout = true },
+        ['Ж'] = { rhs = ':', feed_mode = nil, check_layout = false },
+        ['ж'] = { rhs = ';', feed_mode = nil, check_layout = false },
+        ['ю'] = { rhs = '.', feed_mode = nil, check_layout = false },
+        ['б'] = { rhs = ',', feed_mode = nil, check_layout = false },
+        ['э'] = { rhs = "'", feed_mode = nil, check_layout = false },
+        ['Э'] = { rhs = '"', feed_mode = nil, check_layout = false },
+        ['х'] = { rhs = '[', feed_mode = nil, check_layout = false },
+        ['ъ'] = { rhs = ']', feed_mode = nil, check_layout = false },
+        ['Х'] = { rhs = '{', feed_mode = nil, check_layout = false },
+        ['Ъ'] = { rhs = '}', feed_mode = nil, check_layout = false },
       },
     },
   },
