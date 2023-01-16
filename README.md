@@ -18,7 +18,7 @@ This plugin – a wrapper of standard `vim.keymap.set` and little more:
 ## Requirements
 
 1. [Neovim 0.8+](https://github.com/neovim/neovim/releases)
-2. [rigrep](https://github.com/BurntSushi/ripgrep);
+2. Program for you OS to check current input method (optional)
 
 ## Instalation
 
@@ -75,14 +75,12 @@ require('Langmapper').setup({
       },
 
       ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
-      ---WARNING: it will no work if you have not a function for get current layout on your system
-      ---DOUBLE WARNING: it is works not enough good
       ---rhs: normal mode command to execute
       ---feed_mode:
       ---  n - use nvim-default behavior,
       ---  m - use remapping behavior if key was remmaping by user or another plugin
       ---  (for more info and variants see :h feedkeys())
-      ---check_layout: this causes a delay because checking the current input method is an expensive operation
+      ---check_layout: WARNING: this causes a delay because checking the current input method is an expensive operation
       special_remap = {
         ['.'] = { rhs = '/', feed_mode = nil, check_layout = true },
         [','] = { rhs = '?', feed_mode = nil, check_layout = true },
@@ -135,8 +133,22 @@ map('n', '<Leader>e', '<Cmd>Neotree toggle focus')
 
 ### When you need set mapping inside other plugin:
 
+**Mini.surround example**
+
+```lua
+-- Keep in mind what a pairs ('', "") not remapped,
+-- you need to use those keys where they really located
+map('n', 'sa', 'sa', { remap = true })
+map('n', 'sd', 'sd', { remap = true })
+map('n', 'sc', 'sc', { remap = true })
+map('x', 'sa', 'sa', { remap = true })
+```
+
+**Neo-tree exapmple**
+
 ```lua
 -- Neo-tree config. See https://github.com/Wansmer/nvim-config/blob/main/lua/config/plugins/neo-tree.lua
+-- It will return a table with 'translated' keys and same values.
 local map = require('langmapper.utils')
 local window_mappings = mapper.trans_dict({
   ['o'] = 'open',
@@ -162,8 +174,6 @@ local window_mappings = mapper.trans_dict({
 })
 ```
 
-It will return a table with 'translated' keys and same values.
-
 ## How it works
 
 First: plugin make mapping for all combination with your layout with Ctrl. E.g., you have these layouts:
@@ -175,9 +185,9 @@ Plugin get every char at 'en' and create mapping:
 `vim.keymap.set({ '', '!', 't' }, '<C-' .. char_from_ru .. '>', '<C-' .. char_from_n .. '>')`.
 It means what if neovim already has `'<C-' .. char_from_n .. '>'`, when you're typing same in your keyboard layout, will be trigger built-in functionality. Otherwise, nothing will just happen.
 
-Second: when you use `require('langmapper').map('i', 'jk', '<Esc>'), plugin make two bindings: for 'jk' and for relevant chars in fallback layout. (See `layouts[lang].leaders`)
+Second: when you use `require('langmapper').map('i', 'jk', '<Esc>')`, plugin make two bindings: for `jk` and for relevant chars in fallback layout. (See `layouts[lang].leaders`)
 
-When <leader> or <localleader> must be changed to real symbol – plugin do it.
+When `<leader>` or `<localleader>` must be changed to real symbol – plugin do it.
 
 Third: When you're pressing key, where in English keyboard locate dot (for example), you expect what a dot-functionality will be to happen, but in your current layout is not dot :-(
 Example with Russian layout: I'm pressing key when in English layout locate `/` (slash), but in Russian layout locate `.` (dot). I don't want to keep in mind which current input method. All what I want – get standard `/` functionality (because I'm used to that in this place on the keyboard it is a slash). Plugin check current keyboard layout and if it 'Ru' - send needed key to typeahead buffer (`/` instead `.`). But if current input method is 'En' - plugin send dot.
