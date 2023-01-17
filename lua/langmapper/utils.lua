@@ -1,66 +1,6 @@
 local c = require('langmapper.config')
 local M = {}
 
-local function _update_flag(char, flag)
-  if char:match('[<>]') then
-    flag = not flag and char == '<'
-    if flag and char == '>' then
-      flag = not flag
-    end
-  end
-  return flag
-end
-
----Translate 'lhs' to another layout
----@param lhs string Left-hand side |{lhs}| of the mapping.
----@param lang table Preset for layout
----@param base_layout? string Base layout
----@return string
-function M.translate_keycode(lhs, lang, base_layout)
-  base_layout = base_layout or c.config.default_layout
-  local seq = vim.split(lhs, '', { plain = true })
-  local trans_seq = {}
-  local mod_seq = ''
-  local in_keycode = false
-  local modificators = { ['<C-'] = true, ['<M-'] = true, ['<A-'] = true }
-  local mod_len = 3
-
-  ---Processed char:
-  --- - if it inside CTRL, ALT or META - translate char, no translate special code
-  --- - if it inside < .. > - no translate but do it uppercase
-  --- - if it just char - translate according layout
-  ---@param char string
-  ---@param flag boolean Checking if char inside < .. >
-  ---@param ms string Checking if char inside mod keys (CTRL, ALT, META)
-  ---@return string
-  local function process_char(char, flag, ms)
-    local tr = vim.fn.tr
-    local tr_char = tr(char, base_layout, lang.layout)
-    if flag then
-      return modificators[ms] and tr_char or char:upper()
-    end
-    return tr_char
-  end
-
-  for _, char in ipairs(seq) do
-    in_keycode = _update_flag(char, in_keycode)
-    mod_seq = #mod_seq < mod_len and mod_seq .. char:upper() or mod_seq
-
-    table.insert(trans_seq, process_char(char, in_keycode, mod_seq))
-  end
-
-  local tlhs = table.concat(trans_seq, '')
-
-  ---Force replace leaders if need
-  for key, repl in pairs(lang.leaders) do
-    if repl then
-      tlhs = tlhs:gsub(key, repl)
-    end
-  end
-
-  return tlhs
-end
-
 ---Checking if some item of list meets the condition.
 ---Empty list or non-list table, returning false.
 ---@param tbl table List-like table
@@ -94,6 +34,109 @@ local function is_dict(tbl)
   end)
 end
 
+---Return list of tuples where first elem - start index of keycode, last - end index of keycode
+---@param key_seq string[] Lhs like list of chars
+---@return table
+local function get_keycode_ranges(key_seq)
+  local ranges = {}
+
+  for i, char in ipairs(key_seq) do
+    if char == '<' then
+      table.insert(ranges, { i })
+    end
+
+    if char == '>' then
+      local last = ranges[#ranges]
+      if last and #last < 2 then
+        table.insert(last, i)
+      end
+    end
+  end
+
+  ranges = vim.tbl_filter(function(item)
+    return #item == 2 and (item[2] - item[1]) > 2
+  end, ranges)
+
+  return ranges
+end
+
+---Translate 'lhs' to another layout
+---@param lhs string Left-hand side |{lhs}| of the mapping.
+---@param lang string Name of preset for layout
+---@param base_layout? string Base layout
+---@return string
+function M.translate_keycode(lhs, lang, base_layout)
+  base_layout = base_layout or (c.config.layouts[lang].default_layout or c.config.default_layout)
+  local layout = c.config.layouts[lang].layout
+  local seq = vim.split(lhs, '', { plain = true })
+  local keycode_ranges = get_keycode_ranges(seq)
+  local trans_seq = {}
+  local in_keycode = false
+  local modifiers = { ['<C-'] = true, ['<M-'] = true, ['<A-'] = true, ['<D-'] = true }
+
+  local modifiers_seq = ''
+  local modifiers_len = 3
+
+  ---Processed char:
+  --- - if it inside CTRL, ALT or META - translate char, no translate special code
+  --- - if it inside < .. > - no translate but do it uppercase
+  --- - if it just char - translate according layout
+  ---@param char string
+  ---@param flag boolean Checking if char inside < .. >
+  ---@param ms string Checking if char inside mod keys (CTRL, ALT, META)
+  ---@param idx integer Index of current char in sequence
+  ---@return string
+  local function process_char(char, flag, ms, idx)
+    if flag and char:match('[-<>]') then
+      return char
+    end
+
+    local tr_char = vim.fn.tr(char, base_layout, layout)
+
+    if flag then
+      if modifiers[ms] and seq[idx - 1] == '-' and seq[idx + 1] == '>' then
+        return tr_char
+      else
+        return char
+      end
+    end
+
+    return tr_char
+  end
+
+  local is_in_keycode = function(idx)
+    return some(keycode_ranges, function(range)
+      return idx >= range[1] and idx <= range[2]
+    end)
+  end
+
+  for i, char in ipairs(seq) do
+    in_keycode = is_in_keycode(i)
+    -- Reset value of `modifiers_seq` on end `keycode`
+    if not in_keycode then
+      modifiers_seq = ''
+    else
+      modifiers_seq = #modifiers_seq < modifiers_len and modifiers_seq .. char:upper() or modifiers_seq
+    end
+
+    table.insert(trans_seq, process_char(char, in_keycode, modifiers_seq, i))
+  end
+
+  local tlhs = table.concat(trans_seq, '')
+
+  ---Force replace leaders if need
+  for key, repl in pairs(c.config.layouts[lang].leaders) do
+    local rg = vim.regex('\\c' .. key)
+    local range = { rg:match_str(tlhs) }
+    if repl and #range > 0 then
+      local found = tlhs:sub(unpack(range))
+      tlhs = tlhs:gsub(found, repl)
+    end
+  end
+
+  return tlhs
+end
+
 ---Translate each key of table (recursive)
 ---@param dict table Dict-like table
 ---@return table
@@ -101,7 +144,7 @@ function M.trans_dict(dict)
   local trans_tbl = {}
   for key, cmd in pairs(dict) do
     for _, lang in ipairs(c.config.use_layouts) do
-      trans_tbl[M.translate_keycode(key, c.config.layouts[lang])] = is_dict(cmd) and M.trans_dict(cmd) or cmd
+      trans_tbl[M.translate_keycode(key, lang)] = is_dict(cmd) and M.trans_dict(cmd) or cmd
     end
   end
   return vim.tbl_deep_extend('force', dict, trans_tbl)
@@ -114,7 +157,7 @@ function M.trans_list(list)
   local trans_list = {}
   for _, str in ipairs(list) do
     for _, lang in ipairs(c.config.use_layouts) do
-      table.insert(trans_list, M.translate_keycode(str, c.config.layouts[lang]))
+      table.insert(trans_list, M.translate_keycode(str, lang))
     end
   end
   return vim.list_extend(list, trans_list)
@@ -122,16 +165,25 @@ end
 
 ---Remapping each CTRL sequence
 function M.remap_all_ctrl()
-  local en_list = vim.split(c.config.default_layout:lower(), '', { plain = true })
+  local function remap_ctrl(list, from, to)
+    for _, char in ipairs(vim.fn.uniq(list)) do
+      local modes = { '', '!', 't' }
+      local keycode = '<C-' .. char .. '>'
 
-  for _, char in ipairs(vim.fn.uniq(en_list)) do
-    local modes = { '', '!', 't' }
-    local keycode = '<C-' .. char .. '>'
-
-    for _, lang in ipairs(c.config.use_layouts) do
-      local tr_keycode = '<C-' .. vim.fn.tr(char, c.config.default_layout, c.config.layouts[lang].layout) .. '>'
-      vim.keymap.set(modes, tr_keycode, keycode, { remap = true })
+      local tr_keycode = '<C-' .. vim.fn.tr(char, from, to) .. '>'
+      local desc = ('Langmapper: remap %s for %s'):format(tr_keycode, keycode)
+      vim.keymap.set(modes, tr_keycode, keycode, { remap = true, desc = desc })
     end
+  end
+
+  for _, lang in ipairs(c.config.use_layouts) do
+    local config = c.config
+    local layout = config.layouts[lang]
+    local default_layout = layout.default_layout and layout.default_layout or config.default_layout
+
+    local en_list = vim.split(default_layout:lower(), '', { plain = true })
+
+    remap_ctrl(en_list, default_layout, config.layouts[lang].layout)
   end
 end
 
