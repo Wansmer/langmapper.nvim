@@ -2,8 +2,6 @@
 
 > _⚡Disclaimer: The plugin is under active development. I tested it only on Mac and only with russian keyboard layout. PR are welcome_
 
-> _It is very experimental_
-
 Motivation: vim and neovim historically no friends with keyboard layouts other than English. It is not bad, when you're only coding, but if you work with text on other languages – it is very uncomfortable.
 Yes, we have `langmap` and `langremap` but it no work with all mapping what we want.
 
@@ -19,6 +17,8 @@ This plugin – a wrapper of standard `vim.keymap.set` and little more:
 
 1. [Neovim 0.8+](https://github.com/neovim/neovim/releases)
 2. Program for you OS to check current input method (optional)
+
+> E.g., [im-select](https://github.com/daipeihust/im-select) for MacOS and Windows, [xkb-switch](https://github.com/grwlf/xkb-switch) for Linux.
 
 ## Instalation
 
@@ -56,34 +56,38 @@ use({
 
 ```lua
 require('Langmapper').setup({
-  ---@type table|nil List of :map-arguments for using by default
-  default_map_arguments = nil,
-  ---@type string Standart English layout
-  default_layout = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-  ---@type table
+  ---@type string Standart English layout (only alphabetic symbols)
+  default_layout = [[ABCDEFGHIJKLMNOPQRSTUVWXYZ<>:"{}~abcdefghijklmnopqrstuvwxyz,.;'[]`]],
+  ---@type table Fallback layouts
   layouts = {
-    ---@type table
+    ---@type table Fallback layout item
     ru = {
-      --@type string Name of your second keyboard layout in system
+      ---@type string Name of your second keyboard layout in system.
+      ---It should be the same as result string of `get_current_layout_id`
       id = 'com.apple.keylayout.RussianWin',
-      layout = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯфисвуапршолдьтщзйкыегмцчня',
+      ---@type string
+      default_layout = nil, -- if you need to specify default layout specialy for this fallback layout
+      ---@type string Fallback layout to remap. Should be same length as default layout
+      layout = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯБЮЖЭХЪËфисвуапршолдьтщзйкыегмцчнябюжэхъё',
+      --@type string Fallback extra layout to remap. Should be same length as default extra layout
       ---@type table Dictionary of pairs <leaderkeycode> and replacement
       leaders = {
-        ---@type string|boolean Every <keycode> must be in uppercase
-        ['<LOCALLEADER>'] = 'б',
-        ['<LEADER>'] = false,
+        ---@type string|nil If not nil, key will be replaced in mappings
+        ['<Localleader>'] = 'ж',
+        ['<Leader>'] = nil,
       },
-
       ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
       ---rhs: normal mode command to execute
       ---feed_mode:
-      ---  n - use nvim-default behavior,
-      ---  m - use remapping behavior if key was remmaping by user or another plugin
-      ---  (for more info and variants see :h feedkeys())
-      ---check_layout: WARNING: this causes a delay because checking the current input method is an expensive operation
+      ---  n - use nvim-default behavior (like remap = false)
+      ---  m - use remapping behavior if key was remmaping by user or another plugin (like remap = true)
+      ---  nil - if nil, feed_mode will autodetect
+      ---  (for more info see :h feedkeys(). Here use only n and m)
+      ---check_layout: this causes a delay because checking the current input method is an expensive operation
       special_remap = {
         ['.'] = { rhs = '/', feed_mode = nil, check_layout = true },
         [','] = { rhs = '?', feed_mode = nil, check_layout = true },
+        ['/'] = { rhs = '|', feed_mode = nil, check_layout = true },
         ['Ж'] = { rhs = ':', feed_mode = nil, check_layout = false },
         ['ж'] = { rhs = ';', feed_mode = nil, check_layout = false },
         ['ю'] = { rhs = '.', feed_mode = nil, check_layout = false },
@@ -94,18 +98,23 @@ require('Langmapper').setup({
         ['ъ'] = { rhs = ']', feed_mode = nil, check_layout = false },
         ['Х'] = { rhs = '{', feed_mode = nil, check_layout = false },
         ['Ъ'] = { rhs = '}', feed_mode = nil, check_layout = false },
+        ['ё'] = { rhs = '`', feed_mode = nil, check_layout = false },
+        ['Ë'] = { rhs = '~', feed_mode = nil, check_layout = false },
       },
     },
   },
-  ---@type string[] If empty, will be remapping for all layouts from 'layouts'. If you need to specify layout – add to list below. It will override default values.
+  ---@type string[] If empty, will remapping for all defaults layouts
   use_layouts = {},
   os = {
-    ---Darwin it is a MacOS
     Darwin = {
       ---Function for getting current keyboard layout on your device
       ---Should return string with id of layouts
       ---@return string
       get_current_layout_id = function()
+        -- Works faster:
+        -- local cmd = '/opt/homebrew/bin/im-select'
+
+        -- No need dependencies
         local cmd =
           'defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleCurrentKeyboardLayoutInputSourceID'
         local output = vim.split(vim.trim(vim.fn.system(cmd)), '\n')
@@ -115,8 +124,8 @@ require('Langmapper').setup({
   },
   ---@type boolean Add mapping for every CTRL+ binding or not. Using for remaps CTRL's neovim mappings by default.
   map_all_ctrl = true,
-  -- WARNING: Very experimental. No works good yet
-  try_map_specials = true,
+  ---@type boolean Remap specials keys (see layouts[youlayout].special_remap)
+  remap_specials_keys = true,
 })
 ```
 
@@ -172,6 +181,18 @@ local window_mappings = mapper.trans_dict({
   ['<S-TAB>'] = 'prev_source',
   ['<TAB>'] = 'next_source',
 })
+```
+
+**Comment.nvim example**
+
+```lua
+map('n', 'gcc', function()
+  return vim.v.count == 0 and '<Plug>(comment_toggle_linewise_current)' or '<Plug>(comment_toggle_linewise_count)'
+end, { expr = true })
+
+map('n', 'gbc', function()
+return vim.v.count == 0 and '<Plug>(comment_toggle_blockwise_current)' or '<Plug>(comment_toggle_blockwise_count)'
+end, { expr = true })
 ```
 
 ## How it works
