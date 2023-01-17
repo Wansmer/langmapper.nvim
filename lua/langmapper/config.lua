@@ -1,35 +1,38 @@
 local M = {}
 
 M.config = {
-  ---@type table|nil List of :map-arguments for using by default
-  default_map_arguments = nil,
-  ---@type string Standart English layout
-  default_layout = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-  ---@type table
+  ---@type string Standart English layout (only alphabetic symbols)
+  default_layout = [[ABCDEFGHIJKLMNOPQRSTUVWXYZ<>:"{}~abcdefghijklmnopqrstuvwxyz,.;'[]`]],
+  ---@type table Fallback layouts
   layouts = {
-    ---@type table
+    ---@type table Fallback layout item
     ru = {
-      --@type string Name of your second keyboard layout in system
+      ---@type string Name of your second keyboard layout in system.
+      ---It should be the same as result string of `get_current_layout_id`
       id = 'com.apple.keylayout.RussianWin',
-      layout = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯфисвуапршолдьтщзйкыегмцчня',
+      ---@type string
+      default_layout = nil, -- if you need to specify default layout specialy for this fallback layout
+      ---@type string Fallback layout to remap. Should be same length as default layout
+      layout = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯБЮЖЭХЪËфисвуапршолдьтщзйкыегмцчнябюжэхъё',
+      --@type string Fallback extra layout to remap. Should be same length as default extra layout
       ---@type table Dictionary of pairs <leaderkeycode> and replacement
       leaders = {
-        ---@type string|boolean Every <keycode> must be in uppercase
-        ['<LOCALLEADER>'] = 'б',
-        ['<LEADER>'] = false,
+        ---@type string|nil If not nil, key will be replaced in mappings
+        ['<Localleader>'] = 'ж',
+        ['<Leader>'] = nil,
       },
       ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
-      ---WARNING: it will no work if you have not a function for get current layout on your system
-      ---DOUBLE WARNING: it is works not enough good
       ---rhs: normal mode command to execute
       ---feed_mode:
       ---  n - use nvim-default behavior (like remap = false)
       ---  m - use remapping behavior if key was remmaping by user or another plugin (like remap = true)
+      ---  nil - if nil, feed_mode will autodetect
       ---  (for more info see :h feedkeys(). Here use only n and m)
       ---check_layout: this causes a delay because checking the current input method is an expensive operation
       special_remap = {
         ['.'] = { rhs = '/', feed_mode = nil, check_layout = true },
         [','] = { rhs = '?', feed_mode = nil, check_layout = true },
+        ['/'] = { rhs = '|', feed_mode = nil, check_layout = true },
         ['Ж'] = { rhs = ':', feed_mode = nil, check_layout = false },
         ['ж'] = { rhs = ';', feed_mode = nil, check_layout = false },
         ['ю'] = { rhs = '.', feed_mode = nil, check_layout = false },
@@ -40,6 +43,8 @@ M.config = {
         ['ъ'] = { rhs = ']', feed_mode = nil, check_layout = false },
         ['Х'] = { rhs = '{', feed_mode = nil, check_layout = false },
         ['Ъ'] = { rhs = '}', feed_mode = nil, check_layout = false },
+        ['ё'] = { rhs = '`', feed_mode = nil, check_layout = false },
+        ['Ë'] = { rhs = '~', feed_mode = nil, check_layout = false },
       },
     },
   },
@@ -60,8 +65,8 @@ M.config = {
   },
   ---@type boolean Add mapping for every CTRL+ binding or not. Using for remaps CTRL's neovim mappings by default.
   map_all_ctrl = true,
-  -- WARNING: Very experemental. No works good yet
-  try_map_specials = true,
+  ---@type boolean Remap specials keys (see layouts[youlayout].special_remap)
+  remap_specials_keys = true,
 }
 
 ---Update configuration
