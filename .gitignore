@@ -2,3 +2,4 @@
 /plugin
 todo.md
 **/**/tmp.*
+.tests
