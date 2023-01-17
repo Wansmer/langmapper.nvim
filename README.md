@@ -73,7 +73,7 @@ require('Langmapper').setup({
       ---@type table Dictionary of pairs <leaderkeycode> and replacement
       leaders = {
         ---@type string|nil If not nil, key will be replaced in mappings
-        ['<Localleader>'] = 'ж',
+        ['<Localleader>'] = 'ж', -- e.g., `<Localleader><Cr>` to `ж<Cr>`
         ['<Leader>'] = nil,
       },
       ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
@@ -137,16 +137,17 @@ require('Langmapper').setup({
 -- this function complitely repeat contract of vim.keymap set
 local map = require('langmapper').map
 
-map('n', '<Leader>e', '<Cmd>Neotree toggle focus')
+map('n', '<Leader>e', '<Cmd>Neotree toggle focus<Cr>')
 ```
 
-### When you need set mapping inside other plugin:
+### When you need to set mapping inside other plugin:
 
 **Mini.surround example**
 
 ```lua
 -- Keep in mind what a pairs ('', "") not remapped,
--- you need to use those keys where they really located
+-- you need to use those keys where they really located.
+-- { remap = true } is important
 map('n', 'sa', 'sa', { remap = true })
 map('n', 'sd', 'sd', { remap = true })
 map('n', 'sc', 'sc', { remap = true })
