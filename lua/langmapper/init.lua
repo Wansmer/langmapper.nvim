@@ -17,6 +17,8 @@ function M.setup(opts)
   if config.config.remap_specials_keys then
     u.system_remap()
   end
+
+  -- M.autoremap()
 end
 
 ---Wrapper of vim.keymap.set with same contract
@@ -32,11 +34,19 @@ function M.map(mode, lhs, rhs, opts)
 
   -- Translate mapping for each langs in config.use_layouts
   for _, lang in ipairs(config.config.use_layouts) do
-    local tr_lhs = u.translate_keycode(lhs, lang)
-    if tr_lhs ~= lhs then
-      map(mode, tr_lhs, rhs, opts)
+    if not u.lhs_forbidden(lhs) then
+      local tr_lhs = u.translate_keycode(lhs, lang)
+      if tr_lhs ~= lhs then
+        map(mode, tr_lhs, rhs, opts)
+      end
     end
   end
 end
 
+function M.autoremap()
+  u.autoremap_global()
+  u.autoremap_buffer()
+end
+
+-- https://ya.ru
 return M

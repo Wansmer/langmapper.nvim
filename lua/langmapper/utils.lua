@@ -236,4 +236,108 @@ function M.system_remap()
   end
 end
 
+local function num_to_bool(n)
+  local matches = {
+    ['0'] = false,
+    ['1'] = true,
+  }
+  return matches[tostring(n)]
+end
+
+local function collect_mapopts(maparg, opts)
+  local res = {}
+  for _, opt in ipairs(opts) do
+    if maparg[opt] then
+      res[opt] = num_to_bool(maparg[opt])
+    end
+  end
+
+  return res
+end
+
+local function collect_units(units, maparg)
+  for unit, _ in pairs(units) do
+    if unit == 'rhs' then
+      units[unit] = maparg[unit] and maparg[unit] or maparg.callback
+    elseif maparg[unit] then
+      units[unit] = maparg[unit]
+    end
+  end
+  return units
+end
+
+local function to_keymap_contract(maparg)
+  local booleans = { 'expr', 'noremap', 'nowait', 'script', 'silent' }
+  local res = {
+    lhs = '',
+    rhs = '',
+    desc = '',
+    buffer = 0,
+    mode = '',
+    opts = collect_mapopts(maparg, booleans),
+  }
+  return collect_units(res, maparg)
+end
+
+function M.lhs_forbidden(lhs)
+  local matches = { '<plug>', '<sid>', '<snr>' }
+  return some(matches, function(m)
+    return string.lower(lhs):match(m)
+  end)
+end
+
+local function autoremap(scope)
+  local modes = { 'n', 'v', 'x' }
+  local mappings = {}
+  local bufnr = scope == 'buffer' and vim.api.nvim_get_current_buf() or nil
+
+  for _, mode in ipairs(modes) do
+    local maps = {}
+    if scope == 'buffer' then
+      maps = vim.api.nvim_buf_get_keymap(bufnr, mode)
+    else
+      maps = vim.api.nvim_get_keymap(mode)
+    end
+
+    for _, map in ipairs(maps) do
+      table.insert(mappings, map)
+    end
+  end
+
+  for _, map in ipairs(mappings) do
+    map = to_keymap_contract(map)
+    if map.mode ~= ' ' and not M.lhs_forbidden(map.lhs) then
+      local lhs = M.translate_keycode(map.lhs, 'ru'):gsub('%s', '<leader>')
+      if vim.fn.maparg(lhs, map.mode) == '' then
+        local rhs = function()
+          local repl = vim.api.nvim_replace_termcodes(map.lhs, true, true, true)
+          vim.api.nvim_feedkeys(repl, 'm', true)
+        end
+
+        local opts = vim.tbl_deep_extend('force', map.opts, { buffer = bufnr })
+        local ok, info = pcall(vim.keymap.set, map.mode, lhs, rhs, opts)
+        if not ok then
+          vim.notify('Langmapper (autoremap_global):' .. info)
+        end
+      end
+    end
+  end
+end
+
+function M.autoremap_global()
+  autoremap('global')
+end
+
+function M.autoremap_buffer()
+  vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufRead', 'BufEnter', 'LspAttach' }, {
+    callback = function(data)
+      vim.defer_fn(function()
+        if vim.api.nvim_buf_is_loaded(data.buf) then
+          autoremap('buffer')
+        end
+      end, 0)
+    end,
+  })
+end
+
 return M
