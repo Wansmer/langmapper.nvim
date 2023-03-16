@@ -1,7 +1,7 @@
 local c = require('langmapper.config')
 local M = {}
 
----Checking if some item of list meets the condition.
+---Checks if some item of list meets the condition.
 ---Empty list or non-list table, returning false.
 ---@param tbl table List-like table
 ---@param cb function Callback for checking every item
@@ -20,7 +20,7 @@ local function some(tbl, cb)
   return false
 end
 
----Checking if a table is dict
+---Checks if a table is dict
 ---@param tbl any
 ---@return boolean
 local function is_dict(tbl)
@@ -32,6 +32,12 @@ local function is_dict(tbl)
   return some(keys, function(a)
     return type(a) ~= 'number'
   end)
+end
+
+function M.update_desc(old_desc, method, lhs)
+  old_desc = old_desc and old_desc or ''
+  local pack = old_desc ~= '' and ' for [' .. old_desc .. ']' or ''
+  return 'Langmapper: ' .. method .. ' "' .. lhs .. '" ' .. pack
 end
 
 ---Return list of tuples where first elem - start index of keycode, last - end index of keycode
@@ -219,7 +225,8 @@ function M.system_remap()
     local id = c.config.layouts[lang].id
 
     for lhs, rhs_set in pairs(special_remap) do
-      local desc = ('Langmapper: nvim_feedkeys( %s )'):format(rhs_set.rhs)
+      -- local desc = ('Langmapper: feedkeys( %s )'):format(rhs_set.rhs)
+      local desc = M.update_desc(nil, 'feedkeys', rhs_set.rhs)
       local feed_mode = rhs_set.feed_mode or get_maparg(rhs_set.rhs)
 
       if rhs_set.check_layout then
@@ -280,7 +287,7 @@ local function to_keymap_contract(maparg)
 end
 
 function M.lhs_forbidden(lhs)
-  local matches = { '<plug>', '<sid>', '<snr>' }
+  local matches = { '<plug>', '<sid>', '<snr>', '<nop>' }
   return some(matches, function(m)
     return string.lower(lhs):match(m)
   end)
@@ -300,24 +307,35 @@ local function autoremap(scope)
     end
 
     for _, map in ipairs(maps) do
-      table.insert(mappings, map)
+      if map.mode ~= ' ' and not M.lhs_forbidden(map.lhs) then
+        table.insert(mappings, map)
+      end
     end
   end
 
   for _, map in ipairs(mappings) do
     map = to_keymap_contract(map)
-    if map.mode ~= ' ' and not M.lhs_forbidden(map.lhs) then
-      local lhs = M.translate_keycode(map.lhs, 'ru'):gsub('%s', '<leader>')
-      if vim.fn.maparg(lhs, map.mode) == '' then
-        local rhs = function()
-          local repl = vim.api.nvim_replace_termcodes(map.lhs, true, true, true)
-          vim.api.nvim_feedkeys(repl, 'm', true)
-        end
 
-        local opts = vim.tbl_deep_extend('force', map.opts, { buffer = bufnr })
-        local ok, info = pcall(vim.keymap.set, map.mode, lhs, rhs, opts)
-        if not ok then
-          vim.notify('Langmapper (autoremap_global):' .. info)
+    if map.mode ~= ' ' and not M.lhs_forbidden(map.lhs) then
+      for _, lang in ipairs(c.config.use_layouts) do
+        local lhs = M.translate_keycode(map.lhs, lang)
+        if vim.fn.maparg(lhs, map.mode) == '' then
+          local rhs = function()
+            local repl = vim.api.nvim_replace_termcodes(map.lhs, true, true, true)
+            vim.api.nvim_feedkeys(repl, 'm', true)
+          end
+
+          local desc = map.desc ~= '' and ' for [' .. map.desc .. ']' or ''
+
+          local opts = vim.tbl_deep_extend('force', map.opts, {
+            buffer = bufnr,
+            desc = M.update_desc(map.desc, 'feedkeys', map.lhs),
+          })
+
+          local ok, info = pcall(vim.keymap.set, map.mode, lhs, rhs, opts)
+          if not ok then
+            vim.notify('Langmapper (autoremap):' .. info)
+          end
         end
       end
     end
@@ -329,7 +347,15 @@ function M.autoremap_global()
 end
 
 function M.autoremap_buffer()
-  vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufRead', 'BufEnter', 'LspAttach' }, {
+  vim.api.nvim_create_autocmd({
+    'BufAdd',
+    'BufNew',
+    'BufEnter',
+    'BufWinEnter',
+    'BufReadPost',
+    'BufRead',
+    'LspAttach',
+  }, {
     callback = function(data)
       vim.defer_fn(function()
         if vim.api.nvim_buf_is_loaded(data.buf) then

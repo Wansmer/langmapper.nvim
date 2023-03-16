@@ -18,7 +18,9 @@ function M.setup(opts)
     u.system_remap()
   end
 
-  -- M.autoremap()
+  if config.config.hack_keymap then
+    vim.keymap.set = M.map
+  end
 end
 
 ---Wrapper of vim.keymap.set with same contract
@@ -32,10 +34,18 @@ function M.map(mode, lhs, rhs, opts)
   -- Default mapping
   map(mode, lhs, rhs, opts)
 
-  -- Translate mapping for each langs in config.use_layouts
-  for _, lang in ipairs(config.config.use_layouts) do
-    if not u.lhs_forbidden(lhs) then
+  -- Lhs that contains <Plug>, <Sid>, <Snr> and <Mop> will not be processed
+  if not u.lhs_forbidden(lhs) then
+    -- Translate mapping for each langs in config.use_layouts
+    for _, lang in ipairs(config.config.use_layouts) do
       local tr_lhs = u.translate_keycode(lhs, lang)
+
+      if not opts then
+        opts = { desc = u.update_desc(nil, 'translate', lhs) }
+      else
+        opts.desc = u.update_desc(opts.desc, 'translate', lhs)
+      end
+
       if tr_lhs ~= lhs then
         map(mode, tr_lhs, rhs, opts)
       end

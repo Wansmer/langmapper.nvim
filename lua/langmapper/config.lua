@@ -1,6 +1,14 @@
 local M = {}
 
 M.config = {
+  ---@type boolean Add mapping for every CTRL+ binding or not. Using for remaps CTRL's neovim mappings by default.
+  map_all_ctrl = true,
+  ---@type boolean Remap specials keys (see layouts[youlayout].special_remap)
+  remap_specials_keys = true,
+  ---@type string[] If empty, will remapping for all defaults layouts
+  use_layouts = {},
+  ---@type boolean Execute vim.keymap.set = require('langmapper').map
+  hack_keymap = false,
   ---@type string Standart English layout (only alphabetic symbols)
   default_layout = [[ABCDEFGHIJKLMNOPQRSTUVWXYZ<>:"{}~abcdefghijklmnopqrstuvwxyz,.;'[]`]],
   ---@type table Fallback layouts
@@ -48,8 +56,6 @@ M.config = {
       },
     },
   },
-  ---@type string[] If empty, will remapping for all defaults layouts
-  use_layouts = {},
   os = {
     Darwin = {
       ---Function for getting current keyboard layout on your device
@@ -63,10 +69,6 @@ M.config = {
       end,
     },
   },
-  ---@type boolean Add mapping for every CTRL+ binding or not. Using for remaps CTRL's neovim mappings by default.
-  map_all_ctrl = true,
-  ---@type boolean Remap specials keys (see layouts[youlayout].special_remap)
-  remap_specials_keys = true,
 }
 
 ---Update configuration
