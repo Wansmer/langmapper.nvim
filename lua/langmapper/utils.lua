@@ -1,6 +1,17 @@
 local c = require('langmapper.config')
 local M = {}
 
+---Convert 0/1 to false/true
+---@param n integer
+---@return boolean
+local function num_to_bool(n)
+  local matches = {
+    ['0'] = false,
+    ['1'] = true,
+  }
+  return matches[tostring(n)]
+end
+
 ---Checks if some item of list meets the condition.
 ---Empty list or non-list table, returning false.
 ---@param tbl table List-like table
@@ -170,14 +181,15 @@ function M.trans_list(list)
 end
 
 ---Remapping each CTRL sequence
-function M.remap_all_ctrl()
+function M.ctrls_remap()
   local function remap_ctrl(list, from, to)
     for _, char in ipairs(vim.fn.uniq(list)) do
-      local modes = { '', '!', 't' }
+      -- No use short values of modes like ' ', '!', 'l'
+      local modes = { 'n', 'x', 's', 'o', 'i', 'c', 't' }
       local keycode = '<C-' .. char .. '>'
 
       local tr_keycode = '<C-' .. vim.fn.tr(char, from, to) .. '>'
-      local desc = ('Langmapper: remap %s for %s'):format(tr_keycode, keycode)
+      local desc = M.update_desc(keycode, 'translate', tr_keycode)
       vim.keymap.set(modes, tr_keycode, keycode, { remap = true, desc = desc })
     end
   end
@@ -197,7 +209,7 @@ end
 ---If rhs was remapped by langmapper, use default nvim behavior (mode n)
 ---@param rhs string
 ---@return string
-local function get_maparg(rhs)
+local function get_feedkeys_mode(rhs)
   local arg = vim.fn.maparg(rhs, 'n')
   if arg == '' or arg:match('langmapper') then
     return 'n'
@@ -225,9 +237,8 @@ function M.system_remap()
     local id = c.config.layouts[lang].id
 
     for lhs, rhs_set in pairs(special_remap) do
-      -- local desc = ('Langmapper: feedkeys( %s )'):format(rhs_set.rhs)
       local desc = M.update_desc(nil, 'feedkeys', rhs_set.rhs)
-      local feed_mode = rhs_set.feed_mode or get_maparg(rhs_set.rhs)
+      local feed_mode = rhs_set.feed_mode or get_feedkeys_mode(rhs_set.rhs)
 
       if rhs_set.check_layout then
         if can_check_layout then
@@ -243,15 +254,11 @@ function M.system_remap()
   end
 end
 
-local function num_to_bool(n)
-  local matches = {
-    ['0'] = false,
-    ['1'] = true,
-  }
-  return matches[tostring(n)]
-end
-
-local function collect_mapopts(maparg, opts)
+---Collects keys/values for opts in `vim.keymap.set` with boolean values
+---@param maparg table unit of result of vim.api.nvim_get_keymap()
+---@param opts string[] List of target opts
+---@return table<string, boolean>
+local function collect_bool_opts(maparg, opts)
   local res = {}
   for _, opt in ipairs(opts) do
     if maparg[opt] then
@@ -273,19 +280,22 @@ local function collect_units(units, maparg)
   return units
 end
 
+---Convert `nvim_get_keymap()` unit to `vim.keymap.set` args and opts
+---@param maparg table
+---@return table
 local function to_keymap_contract(maparg)
   local booleans = { 'expr', 'noremap', 'nowait', 'script', 'silent' }
-  local res = {
-    lhs = '',
-    rhs = '',
-    desc = '',
-    buffer = 0,
-    mode = '',
-    opts = collect_mapopts(maparg, booleans),
-  }
+  local opts = vim.tbl_extend('force', {
+    buffer = maparg.buffer,
+    desc = maparg.desc,
+  }, collect_bool_opts(maparg, booleans))
+  local res = { lhs = '', rhs = '', mode = '', opts = opts }
   return collect_units(res, maparg)
 end
 
+---Checks if lhs if forbidden
+---@param lhs string
+---@return boolean
 function M.lhs_forbidden(lhs)
   local matches = { '<plug>', '<sid>', '<snr>', '<nop>' }
   return some(matches, function(m)
@@ -293,10 +303,16 @@ function M.lhs_forbidden(lhs)
   end)
 end
 
+local function has_map(lhs, map, mappings)
+  return some(mappings, function(el)
+    return el.lhs == lhs and el.mode == map.mode and el.buffer == map.opts.buffer
+  end)
+end
+
 local function autoremap(scope)
   local modes = { 'n', 'v', 'x' }
-  local mappings = {}
   local bufnr = scope == 'buffer' and vim.api.nvim_get_current_buf() or nil
+  local mappings = {}
 
   for _, mode in ipairs(modes) do
     local maps = {}
@@ -307,7 +323,7 @@ local function autoremap(scope)
     end
 
     for _, map in ipairs(maps) do
-      if map.mode ~= ' ' and not M.lhs_forbidden(map.lhs) then
+      if vim.trim(map.mode) ~= '' and not M.lhs_forbidden(map.lhs) then
         table.insert(mappings, map)
       end
     end
@@ -315,27 +331,28 @@ local function autoremap(scope)
 
   for _, map in ipairs(mappings) do
     map = to_keymap_contract(map)
+    for _, lang in ipairs(c.config.use_layouts) do
+      local lhs = M.translate_keycode(map.lhs, lang)
 
-    if map.mode ~= ' ' and not M.lhs_forbidden(map.lhs) then
-      for _, lang in ipairs(c.config.use_layouts) do
-        local lhs = M.translate_keycode(map.lhs, lang)
-        if vim.fn.maparg(lhs, map.mode) == '' then
-          local rhs = function()
-            local repl = vim.api.nvim_replace_termcodes(map.lhs, true, true, true)
-            vim.api.nvim_feedkeys(repl, 'm', true)
-          end
+      if not has_map(lhs, map, mappings) then
+        local rhs = function()
+          local repl = vim.api.nvim_replace_termcodes(map.lhs, true, true, true)
+          vim.api.nvim_feedkeys(repl, 'm', true)
+        end
 
-          local desc = map.desc ~= '' and ' for [' .. map.desc .. ']' or ''
+        local opts = {
+          buffer = bufnr,
+          desc = M.update_desc(map.opts.desc, 'feedkeys', map.lhs),
+        }
 
-          local opts = vim.tbl_deep_extend('force', map.opts, {
-            buffer = bufnr,
-            desc = M.update_desc(map.desc, 'feedkeys', map.lhs),
-          })
+        local mode = map.mode
+        if #mode > 1 then
+          mode = vim.split(mode, '')
+        end
 
-          local ok, info = pcall(vim.keymap.set, map.mode, lhs, rhs, opts)
-          if not ok then
-            vim.notify('Langmapper (autoremap):' .. info)
-          end
+        local ok, info = pcall(vim.keymap.set, mode, lhs, rhs, opts)
+        if not ok then
+          vim.notify('Langmapper (autoremap):' .. info)
         end
       end
     end

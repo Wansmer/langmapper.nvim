@@ -11,7 +11,7 @@ function M.setup(opts)
   config.update_config(opts)
 
   if config.config.map_all_ctrl then
-    u.remap_all_ctrl()
+    u.ctrls_remap()
   end
 
   if config.config.remap_specials_keys then
@@ -58,5 +58,4 @@ function M.autoremap()
   u.autoremap_buffer()
 end
 
--- https://ya.ru
 return M
