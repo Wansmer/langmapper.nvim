@@ -303,6 +303,11 @@ function M.lhs_forbidden(lhs)
   end)
 end
 
+---TODO: rewrite with dict for performance
+---@param lhs string Translated lhs
+---@param map table map-data
+---@param mappings table List of mapping
+---@return boolean
 local function has_map(lhs, map, mappings)
   return some(mappings, function(el)
     return el.lhs == lhs and el.mode == map.mode and el.buffer == map.opts.buffer
@@ -340,6 +345,7 @@ local function autoremap(scope)
           vim.api.nvim_feedkeys(repl, 'm', true)
         end
 
+        -- No need original opts because uses `nvim feedkeys()`
         local opts = {
           buffer = bufnr,
           desc = M.update_desc(map.opts.desc, 'feedkeys', map.lhs),
