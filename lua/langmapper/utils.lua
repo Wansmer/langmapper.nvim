@@ -1,4 +1,6 @@
 local c = require('langmapper.config')
+local keymap = vim.keymap.set
+
 local M = {}
 
 ---Convert 0/1 to false/true
@@ -222,7 +224,7 @@ function M._ctrls_remap()
 
       local tr_keycode = '<C-' .. vim.fn.tr(char, from, to) .. '>'
       local desc = M.update_desc(keycode, 'translate', tr_keycode)
-      vim.keymap.set(modes, tr_keycode, keycode, { remap = true, desc = desc })
+      keymap(modes, tr_keycode, keycode, { remap = true, desc = desc })
     end
   end
 
@@ -276,12 +278,12 @@ function M._system_remap()
       if rhs_set.check_layout then
         if can_check_layout then
           local cb = feed_special(rhs_set, lhs, id, feed_mode)
-          vim.keymap.set('n', lhs, cb, { desc = desc })
+          keymap('n', lhs, cb, { desc = desc })
         end
       else
         local remap = feed_mode == 'm' and true or false
         local opts = { remap = remap, desc = desc }
-        vim.keymap.set('n', lhs, rhs_set.rhs, opts)
+        keymap('n', lhs, rhs_set.rhs, opts)
       end
     end
   end
@@ -390,7 +392,7 @@ local function autoremap(scope)
           mode = vim.split(mode, '')
         end
 
-        local ok, info = pcall(vim.keymap.set, mode, lhs, rhs, opts)
+        local ok, info = pcall(keymap, mode, lhs, rhs, opts)
         if not ok then
           vim.notify('Langmapper (autoremap):' .. info)
         end

@@ -2,10 +2,14 @@ local u = require('langmapper.utils')
 local config = require('langmapper.config')
 
 local map = vim.keymap.set
-local original_set = vim.keymap.set
 local del = vim.keymap.del
 
 local M = {}
+
+---Original function `vim.keymap.set`. Useful when `hack_keymap` is `true`
+M.original_set = vim.keymap.set
+---Original function `vim.keymap.del`. Useful when `hack_keymap` is `true`
+M.original_del = vim.keymap.del
 
 ---Setup langmapper
 ---@param opts? table
@@ -22,6 +26,7 @@ function M.setup(opts)
 
   if config.config.hack_keymap then
     vim.keymap.set = M.map
+    vim.keymap.del = M.del
   end
 end
 
@@ -52,10 +57,12 @@ function M.map(mode, lhs, rhs, opts)
   end
 end
 
----Wrapper of vim.keymap.set with same contract
+---Wrapper of vim.keymap.del with same contract
 ---@param mode string|table Same mode short names as |nvim_set_keymap()|
 ---@param lhs string Left-hand side |{lhs}| of the mapping.
----@param opts table|nil A table of |:map-arguments|.
+---@param opts table|nil A table of optional arguments:
+---  - buffer: (number or boolean) Remove a mapping from the given buffer.
+---  When "true" or 0, use the current buffer.
 function M.del(mode, lhs, opts)
   opts = opts or nil
 
@@ -77,6 +84,13 @@ function M.del(mode, lhs, opts)
   end
 end
 
+---Gets the output of `nvim_get_keymap` for all modes listed in the `autoremap_modes`,
+---and sets the translated mappings using `nvim_feedkeys`.
+---Then sets event handlers `{ 'BufWinEnter', 'LspAttach' }` to do the same with outputting
+---`nvim_buf_get_keymap` for each open buffer.
+---Must be called at the very end of `init.lua`,
+---after all plugins have been loaded and all key bindings have been set.
+---Does not handle mappings for lazy-loaded plugins. To avoid it, see `hack_keymap`.
 function M.autoremap()
   u._autoremap_global()
   u._autoremap_buffer()
