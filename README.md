@@ -146,6 +146,54 @@ local default_config = {
 
 </details>
 
+## Usage
+
+### Simple
+
+Set up your `layout` in config, set `hack_keymap` to `true` and load Langmapper the first of the sheet of plugins, then call `langmapper.setup(opts)`.
+
+Under such conditions, all subsequent calls to `vim.keymap.set`, `vim.keymap.del`, `vim.api.nvim_(buf)_set_keymap` and `vim.api.nvim_(buf)_del_keymap` will be wrapped with a special function, which will automatically translate mappings and register them.
+
+This means that even in the case of lazy-loading, the mapping setup will still be processed and the translated mapping will be registered for it.
+
+If you need to handle built-in and vim script mappings too, call the `langmapper.automapping()` function at the very end of your `init.lua`.
+
+### Manualy
+
+Set up your `layout` in config, and call `langmapper.setup(opts)`.
+
+### For regular mapping:
+
+```lua
+-- this function complitely repeat contract of vim.keymap.set
+local map = require('langmapper').map
+
+map('n', '<Leader>e', '<Cmd>Neotree toggle focus<Cr>')
+```
+
+### Mapping inside other plugin:
+
+```lua
+-- Neo-tree config.
+-- It will return a table with 'translated' keys and same values.
+local map = require('langmapper.utils')
+local window_mappings = mapper.trans_dict({
+  ['o'] = 'open',
+  ['sg'] = 'split_with_window_picker',
+  ['<leader>d'] = 'copy',
+})
+```
+
+### With automapping
+
+Add `langmapper.autoremap({ global = true, buffer = true })` to the end of your `init.lua`.
+
+It will autotranslate all registered mappings from `nvim_get_keymap()` and `nvim_buf_get_keymap()`.
+
+But it cannot handle mappings of lazy loaded plugins.
+
+> NOTE: all keys, that you're using in `keys = {}` in `lazy.nvim` also will be translated.
+
 ## API
 
 **Usage:**
@@ -213,6 +261,7 @@ function M.del(mode, lhs, opts)
 Original keymap's functions, that were wrap with translates functions if `hack_keymap` is `true`:
 
 ```lua
+-- When you don't need some mapping to be translated. For example, I don't translate `jk`.
 `original_set()` -- vim.keymap.set
 `original_del()` -- vim.keymap.del
 `original_set_keymap()` -- vim.api.nvim_set_keymap
