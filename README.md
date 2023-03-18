@@ -1,5 +1,7 @@
 # Langmapper
 
+A plugin that makes Neovim more friendly to non-English input methods 🤝
+
 <!-- panvimdoc-ignore-start -->
 
 <!--toc:start-->
@@ -16,8 +18,6 @@
 <!--toc:end-->
 
 <!-- panvimdoc-ignore-end -->
-
-A plugin that makes Neovim more friendly to non-English input methods.
 
 ## TLDR
 
