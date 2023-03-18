@@ -1,5 +1,22 @@
 # Langmapper
 
+<!-- panvimdoc-ignore-start -->
+
+<!--toc:start-->
+
+- [TLDR](#tldr)
+- [Requirements](#requirements)
+- [Instalation](#instalation)
+- [Settings](#settings)
+- [Usage](#usage)
+  - [Simple](#simple)
+  - [Manualy](#manualy)
+- [API](#api)
+- [Utils](#utils)
+<!--toc:end-->
+
+<!-- panvimdoc-ignore-end -->
+
 A plugin that makes Neovim more friendly to non-English input methods.
 
 ## TLDR
@@ -162,7 +179,7 @@ If you need to handle built-in and vim script mappings too, call the `langmapper
 
 Set up your `layout` in config, and call `langmapper.setup(opts)`.
 
-### For regular mapping:
+#### For regular mapping:
 
 ```lua
 -- this function complitely repeat contract of vim.keymap.set
@@ -171,7 +188,7 @@ local map = require('langmapper').map
 map('n', '<Leader>e', '<Cmd>Neotree toggle focus<Cr>')
 ```
 
-### Mapping inside other plugin:
+#### Mapping inside other plugin:
 
 ```lua
 -- Neo-tree config.
@@ -184,7 +201,7 @@ local window_mappings = mapper.trans_dict({
 })
 ```
 
-### With automapping
+#### With automapping
 
 Add `langmapper.autoremap({ global = true, buffer = true })` to the end of your `init.lua`.
 
