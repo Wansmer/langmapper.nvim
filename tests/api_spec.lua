@@ -1,3 +1,5 @@
+local u = require('langmapper.utils')
+
 describe('Langmapper: API', function()
   require('langmapper').setup()
 
@@ -15,58 +17,93 @@ describe('Langmapper: API', function()
   local utils = require('langmapper.utils')
   local map = require('langmapper').map
   local del = require('langmapper').del
+  local wrap_set = require('langmapper').wrap_nvim_set_keymap
+  local wrap_del = require('langmapper').wrap_nvim_del_keymap
+  local wrap_buf_set = require('langmapper').wrap_nvim_buf_set_keymap
+  local wrap_buf_del = require('langmapper').wrap_nvim_buf_del_keymap
 
-  local ex1 = '<leader>d'
-  local ex2 = '<localleader>f'
-  local ex3 = 'jk'
-  local tr_ex1 = utils.translate_keycode(ex1, 'ru')
-  local tr_ex2 = utils.translate_keycode(ex2, 'ru')
-  local tr_ex3 = utils.translate_keycode(ex3, 'ru')
+  local test_maps = {
+    ['<leader>d'] = '<leader>в',
+    ['<localleader>f'] = 'жа',
+    ['jk'] = 'ол',
+  }
 
-  it('`map()`: Map ' .. ex1 .. ' and it has translated counterpart (' .. tr_ex1 .. ')', function()
-    map({ 'v', 'n' }, ex1, 'l')
-    local has_map_n = vim.fn.maparg(tr_ex1, 'n') ~= ''
-    local has_map_v = vim.fn.maparg(tr_ex1, 'v') ~= ''
-    assert.is_true(has_map_n and has_map_v)
-  end)
+  for key, val in pairs(test_maps) do
+    it(('`map()`: Map "%s" and it has translated counterpart "%s"'):format(key, val), function()
+      map({ 'v', 'n' }, key, 'l')
+      local has_map_n = vim.fn.maparg(val, 'n') ~= ''
+      local has_map_v = vim.fn.maparg(val, 'v') ~= ''
+      assert.is_true(has_map_n and has_map_v)
+    end)
 
-  it('`map()`: Map ' .. ex2 .. ' and it has translated counterpart (' .. tr_ex2 .. ')', function()
-    map({ 'v', 'n' }, ex2, 'l')
-    local has_map_n = vim.fn.maparg(tr_ex2, 'n') ~= ''
-    local has_map_v = vim.fn.maparg(tr_ex2, 'v') ~= ''
-    assert.is_true(has_map_n and has_map_v)
-  end)
+    it(('`del()`: Delete "%s". "%s" must also be deleted'):format(key, val), function()
+      del({ 'v', 'n' }, key)
+      local has_map_n = vim.fn.maparg(key, 'n') ~= ''
+      local has_tr_map_n = vim.fn.maparg(val, 'n') ~= ''
+      local has_map_v = vim.fn.maparg(key, 'v') ~= ''
+      local has_tr_map_v = vim.fn.maparg(val, 'v') ~= ''
+      assert.is_false(has_map_n and has_map_v and has_tr_map_v and has_tr_map_n)
+    end)
 
-  it('`map()`: Map ' .. ex3 .. ' and it has translated counterpart (' .. tr_ex3 .. ')', function()
-    map({ 'i' }, ex3, 'l')
-    local has_map_i = vim.fn.maparg(tr_ex3, 'i') ~= ''
-    assert.is_true(has_map_i)
-  end)
+    it(('`wrap_nvim_set_keymap()`: Map "%s" and it has translated counterpart "%s"'):format(key, val), function()
+      wrap_set('n', key, 'l')
+      local has_map_n = vim.fn.maparg(val, 'n') ~= ''
+      assert.is_true(has_map_n)
+    end)
 
-  it('`del()`: Delete ' .. ex1 .. '. "' .. tr_ex1 .. '" must also be deleted', function()
-    del({ 'v', 'n' }, ex1)
-    local has_map_n = vim.fn.maparg(ex1, 'n') ~= ''
-    local has_tr_map_n = vim.fn.maparg(tr_ex1, 'n') ~= ''
-    local has_map_v = vim.fn.maparg(tr_ex1, 'v') ~= ''
-    local has_tr_map_v = vim.fn.maparg(tr_ex1, 'v') ~= ''
-    assert.is_false(has_map_n and has_map_v and has_tr_map_v and has_tr_map_n)
-  end)
+    it(('`wrap_nvim_del_keymap()`: Delete "%s". "%s" must also be deleted'):format(key, val), function()
+      wrap_del('n', key)
+      local has_map_n = vim.fn.maparg(key, 'n') ~= ''
+      local has_tr_map_n = vim.fn.maparg(val, 'n') ~= ''
+      assert.is_false(has_map_n and has_tr_map_n)
+    end)
 
-  it('`del()`: Delete ' .. ex2 .. '. "' .. tr_ex2 .. '" must also be deleted', function()
-    del({ 'v', 'n' }, ex2)
-    local has_map_n = vim.fn.maparg(ex2, 'n') ~= ''
-    local has_tr_map_n = vim.fn.maparg(tr_ex2, 'n') ~= ''
-    local has_map_v = vim.fn.maparg(tr_ex2, 'v') ~= ''
-    local has_tr_map_v = vim.fn.maparg(tr_ex2, 'v') ~= ''
-    assert.is_false(has_map_n and has_map_v and has_tr_map_v and has_tr_map_n)
-  end)
+    it(('`wrap_nvim_buf_set_keymap()`: Map "%s" and it has translated counterpart "%s"'):format(key, val), function()
+      local bufnr = vim.api.nvim_get_current_buf()
+      wrap_buf_set(bufnr, 'n', key, 'l')
 
-  it('`del()`: Delete ' .. ex3 .. '. "' .. tr_ex3 .. '" must also be deleted', function()
-    del({ 'i' }, ex3)
-    local has_map_i = vim.fn.maparg(ex3, 'n') ~= ''
-    local has_tr_map_i = vim.fn.maparg(tr_ex3, 'n') ~= ''
-    assert.is_false(has_map_i and has_tr_map_i)
-  end)
+      if key:match('<leader>') then
+        key = key:gsub('<leader>', vim.g.mapleader)
+      elseif key:match('<localleader>') then
+        key = key:gsub('<localleader>', vim.g.maplocalleader)
+      end
+
+      local buf_maps = vim.api.nvim_buf_get_keymap(bufnr, 'n')
+
+      local has_orig = u.some(buf_maps, function(unit)
+        return key:gsub('<leader>|<localleader>', ' ') == unit.lhs
+      end)
+
+      local has_tr = u.some(buf_maps, function(unit)
+        return val:gsub('<leader>', ' ') == unit.lhs
+      end)
+
+      assert.is_true(has_orig and has_tr)
+    end)
+
+    it(('`wrap_nvim_buf_del_keymap()`: Delete "%s". "%s" must also be deleted'):format(key, val), function()
+      local bufnr = vim.api.nvim_get_current_buf()
+      wrap_buf_del(bufnr, 'n', key)
+
+      if key:match('<leader>') then
+        key = key:gsub('<leader>', vim.g.mapleader)
+      elseif key:match('<localleader>') then
+        key = key:gsub('<localleader>', vim.g.maplocalleader)
+      end
+
+      local buf_maps = vim.api.nvim_buf_get_keymap(bufnr, 'n')
+
+      local has_orig = u.some(buf_maps, function(unit)
+        return key:gsub('<leader>|<localleader>', ' ') == unit.lhs
+      end)
+
+      local has_tr = u.some(buf_maps, function(unit)
+        return val:gsub('<leader>', ' ') == unit.lhs
+      end)
+
+      assert.is_true(not (has_orig and has_tr))
+    end)
+  end
 
   local builtins = {
     Y = 'Н',

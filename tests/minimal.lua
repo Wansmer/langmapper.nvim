@@ -6,6 +6,8 @@ vim.opt.shiftwidth = 2
 vim.opt.writebackup = false
 vim.opt.swapfile = false
 vim.opt.shadafile = 'NONE'
+vim.g.mapleader = ' '
+vim.g.maplocalleader = ';'
 
 vim.cmd([[
 set runtimepath=$VIMRUNTIME

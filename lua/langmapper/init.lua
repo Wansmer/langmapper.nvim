@@ -97,8 +97,9 @@ end
 ---@param mode string Mode short-name
 ---@param lhs string Left-hand-side |{lhs}| of the mapping.
 ---@param rhs string  Right-hand-side |{rhs}| of the mapping.
----@param opts table Optional parameters map
+---@param opts? table Optional parameters map
 function M.wrap_nvim_set_keymap(mode, lhs, rhs, opts)
+  opts = opts or {}
   -- Default mapping
   M.old_set_keymap(mode, lhs, rhs, opts)
   -- Translated mapping
@@ -111,8 +112,9 @@ end
 ---@param mode string Mode short-name
 ---@param lhs string Left-hand-side |{lhs}| of the mapping.
 ---@param rhs string  Right-hand-side |{rhs}| of the mapping.
----@param opts table Optional parameters map
+---@param opts? table Optional parameters map
 function M.wrap_nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts)
+  opts = opts or {}
   -- Default mapping
   M.old_buf_set_keymap(buffer, mode, lhs, rhs, opts)
   -- Translated mapping
