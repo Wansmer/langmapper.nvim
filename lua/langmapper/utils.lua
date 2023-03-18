@@ -406,22 +406,13 @@ end
 
 ---Adds translated mappings for buffer
 function M._autoremap_buffer()
-  -- Different plugins set their local-buffer mappings while different events. That's why need to handle so many events.
-  vim.api.nvim_create_autocmd({
-    'BufAdd',
-    'BufNew',
-    'BufEnter',
-    'BufWinEnter',
-    'BufReadPost',
-    'BufRead',
-    'LspAttach',
-  }, {
+  vim.api.nvim_create_autocmd({ 'BufWinEnter', 'LspAttach' }, {
     callback = function(data)
-      vim.defer_fn(function()
+      vim.schedule(function()
         if vim.api.nvim_buf_is_loaded(data.buf) then
           autoremap('buffer')
         end
-      end, 0)
+      end)
     end,
   })
 end

@@ -6,6 +6,7 @@ describe('Langmapper: API', function()
     ['<leader>a'] = '<leader>ф',
     ['<leader>b'] = '<leader>и',
   }
+
   for key, _ in pairs(mappings_before) do
     vim.keymap.set('n', key, 'l')
   end
@@ -72,6 +73,7 @@ describe('Langmapper: API', function()
     gx = 'пч',
     ['[%'] = 'х%',
     [']%'] = 'ъ%',
+    ['g%'] = 'п%',
   }
 
   for key, val in pairs(builtins) do
