@@ -13,11 +13,11 @@ function M.setup(opts)
   config.update_config(opts)
 
   if config.config.map_all_ctrl then
-    u.ctrls_remap()
+    u._ctrls_remap()
   end
 
   if config.config.remap_specials_keys then
-    u.system_remap()
+    u._system_remap()
   end
 
   if config.config.hack_keymap then
@@ -36,21 +36,18 @@ function M.map(mode, lhs, rhs, opts)
   -- Default mapping
   map(mode, lhs, rhs, opts)
 
-  -- Lhs that contains <Plug>, <Sid> and <Snr> will not be processed
-  if not u.lhs_forbidden(lhs) then
-    -- Translate mapping for each langs in config.use_layouts
-    for _, lang in ipairs(config.config.use_layouts) do
-      local tr_lhs = u.translate_keycode(lhs, lang)
+  -- Translate mapping for each langs in config.use_layouts
+  for _, lang in ipairs(config.config.use_layouts) do
+    local tr_lhs = u.translate_keycode(lhs, lang)
 
-      if not opts then
-        opts = { desc = u.update_desc(nil, 'translate', lhs) }
-      else
-        opts.desc = u.update_desc(opts.desc, 'translate', lhs)
-      end
+    if not opts then
+      opts = { desc = u.update_desc(nil, 'translate', lhs) }
+    else
+      opts.desc = u.update_desc(opts.desc, 'translate', lhs)
+    end
 
-      if tr_lhs ~= lhs then
-        map(mode, tr_lhs, rhs, opts)
-      end
+    if tr_lhs ~= lhs then
+      map(mode, tr_lhs, rhs, opts)
     end
   end
 end
@@ -67,25 +64,22 @@ function M.del(mode, lhs, opts)
 
   mode = type(mode) == 'table' and mode or { mode }
 
-  -- Lhs that contains <Plug>, <Sid> and <Snr> will not be processed
-  if not u.lhs_forbidden(lhs) then
-    -- Translate mapping for each langs in config.use_layouts
-    for _, lang in ipairs(config.config.use_layouts) do
-      local tr_lhs = u.translate_keycode(lhs, lang)
-      local has = u.every(mode, function(m)
-        return vim.fn.maparg(tr_lhs, m) ~= ''
-      end)
+  -- Translate mapping for each langs in config.use_layouts
+  for _, lang in ipairs(config.config.use_layouts) do
+    local tr_lhs = u.translate_keycode(lhs, lang)
+    local has = u.every(mode, function(m)
+      return vim.fn.maparg(tr_lhs, m) ~= ''
+    end)
 
-      if tr_lhs ~= lhs and has then
-        del(mode, tr_lhs, opts)
-      end
+    if tr_lhs ~= lhs and has then
+      del(mode, tr_lhs, opts)
     end
   end
 end
 
 function M.autoremap()
-  u.autoremap_global()
-  u.autoremap_buffer()
+  u._autoremap_global()
+  u._autoremap_buffer()
 end
 
 return M

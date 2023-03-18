@@ -37,7 +37,7 @@ end
 ---@param cb function Callback for checking every item
 ---@return boolean
 function M.every(tbl, cb)
-  if type(tbl) ~= 'table' or not vim.tbl_islist(tbl) or M.is_empty(tbl) then
+  if type(tbl) ~= 'table' or not vim.tbl_islist(tbl) or vim.tbl_isempty(tbl) then
     return false
   end
 
@@ -101,13 +101,16 @@ local function get_keycode_ranges(key_seq)
   return ranges
 end
 
----Translate 'lhs' to another layout
+---Translate 'lhs' to 'lang' layout. If in 'lang' layout no specified `base_layout`, uses global `base_layout`
 ---@param lhs string Left-hand side |{lhs}| of the mapping.
 ---@param lang string Name of preset for layout
----@param base_layout? string Base layout
 ---@return string
-function M.translate_keycode(lhs, lang, base_layout)
-  base_layout = base_layout or (c.config.layouts[lang].default_layout or c.config.default_layout)
+function M.translate_keycode(lhs, lang)
+  if M.lhs_forbidden(lhs) then
+    return lhs
+  end
+
+  local base_layout = c.config.layouts[lang].default_layout or c.config.default_layout
   local layout = c.config.layouts[lang].layout
   local seq = vim.split(lhs, '', { plain = true })
   local keycode_ranges = get_keycode_ranges(seq)
@@ -128,18 +131,17 @@ function M.translate_keycode(lhs, lang, base_layout)
   ---@param idx integer Index of current char in sequence
   ---@return string
   local function process_char(char, flag, ms, idx)
-    if flag and char:match('[-<>]') then
+    local in_modifier = modifiers[ms] and seq[idx - 1] == '-' and seq[idx + 1] == '>'
+
+    if flag and (char:match('[-<>]') or not in_modifier) then
       return char
     end
 
     local tr_char = vim.fn.tr(char, base_layout, layout)
 
-    if flag then
-      if modifiers[ms] and seq[idx - 1] == '-' and seq[idx + 1] == '>' then
-        return tr_char
-      else
-        return char
-      end
+    -- Ctrl shouldn't be mapped with uppercase letter
+    if ms == '<C-' then
+      tr_char = vim.fn.tr(char:lower(), base_layout, layout)
     end
 
     return tr_char
@@ -178,7 +180,7 @@ function M.translate_keycode(lhs, lang, base_layout)
   return tlhs
 end
 
----Translate each key of table (recursive)
+---Translates each key of table for all layouts in `use_layouts` option (recursive)
 ---@param dict table Dict-like table
 ---@return table
 function M.trans_dict(dict)
@@ -191,21 +193,27 @@ function M.trans_dict(dict)
   return vim.tbl_deep_extend('force', dict, trans_tbl)
 end
 
----Translate each value of list
+---Translates each value of the list for all layouts in `use_layouts` option. Non-string value is ignored.
+---Translated value will be added to the end.
 ---@param list table List-like table
----@return table
+---@return table Copy of passed list with new translated values
 function M.trans_list(list)
-  local trans_list = {}
+  local trans_list = vim.list_extend({}, list)
   for _, str in ipairs(list) do
-    for _, lang in ipairs(c.config.use_layouts) do
-      table.insert(trans_list, M.translate_keycode(str, lang))
+    if type(str) == 'string' then
+      for _, lang in ipairs(c.config.use_layouts) do
+        local tr_val = M.translate_keycode(str, lang)
+        if tr_val ~= str then
+          table.insert(trans_list, M.translate_keycode(str, lang))
+        end
+      end
     end
   end
-  return vim.list_extend(list, trans_list)
+  return trans_list
 end
 
 ---Remapping each CTRL sequence
-function M.ctrls_remap()
+function M._ctrls_remap()
   local function remap_ctrl(list, from, to)
     for _, char in ipairs(vim.fn.uniq(list)) do
       -- No use short values of modes like ' ', '!', 'l'
@@ -222,7 +230,7 @@ function M.ctrls_remap()
     local config = c.config
     local layout = config.layouts[lang]
     local default_layout = layout.default_layout and layout.default_layout or config.default_layout
-    -- Mapping with ctrl is case-insensitive. Prevents double mappings.
+    -- Mapping with ctrl is case-insensitive, but will work only with lower-case remap. Prevents double mappings.
     local lowers_and_special = default_layout:gsub('%u', '')
     local en_list = vim.split(lowers_and_special, '', { plain = true })
 
@@ -243,7 +251,7 @@ local function get_feedkeys_mode(rhs)
 end
 
 ---Remapping special keys like '.', ',', ':', ';'
-function M.system_remap()
+function M._system_remap()
   local os = vim.loop.os_uname().sysname
 
   local get_layout_id = c.config.os[os] and c.config.os[os].get_current_layout_id
@@ -392,12 +400,12 @@ local function autoremap(scope)
 end
 
 ---Adds translated mappings for global
-function M.autoremap_global()
+function M._autoremap_global()
   autoremap('global')
 end
 
 ---Adds translated mappings for buffer
-function M.autoremap_buffer()
+function M._autoremap_buffer()
   -- Different plugins set their local-buffer mappings while different events. That's why need to handle so many events.
   vim.api.nvim_create_autocmd({
     'BufAdd',

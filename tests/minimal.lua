@@ -7,7 +7,11 @@ vim.opt.writebackup = false
 vim.opt.swapfile = false
 vim.opt.shadafile = 'NONE'
 
-vim.cmd([[set runtimepath=$VIMRUNTIME]])
+vim.cmd([[
+set runtimepath=$VIMRUNTIME
+runtime plugin/netrwPlugin.vim
+packadd matchit
+]])
 vim.opt.runtimepath:append(CWD)
 vim.opt.packpath = { CWD .. '.tests/site' }
 
