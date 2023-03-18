@@ -7,8 +7,12 @@ M.config = {
   remap_specials_keys = true,
   ---@type string[] If empty, will remapping for all defaults layouts
   use_layouts = {},
-  ---@type boolean Execute vim.keymap.set = require('langmapper').map
+  ---@type boolean Execute vim.keymap.set|del = require('langmapper').map|del
   hack_keymap = false,
+  ---@type table Modes whose mappings will be checked during automapping.
+  ---Each mode must be specified, even if some of them extend others.
+  ---E.g., 'v' includes 'x' and 's', but must be listed separate.
+  autoremap_modes = { 'n', 'v', 'x', 's' },
   ---@type string Standart English layout (only alphabetic symbols)
   default_layout = [[ABCDEFGHIJKLMNOPQRSTUVWXYZ<>:"{}~abcdefghijklmnopqrstuvwxyz,.;'[]`]],
   ---@type table Fallback layouts

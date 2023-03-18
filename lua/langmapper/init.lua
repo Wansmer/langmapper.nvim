@@ -2,6 +2,8 @@ local u = require('langmapper.utils')
 local config = require('langmapper.config')
 
 local map = vim.keymap.set
+local original_set = vim.keymap.set
+local del = vim.keymap.del
 
 local M = {}
 
@@ -34,7 +36,7 @@ function M.map(mode, lhs, rhs, opts)
   -- Default mapping
   map(mode, lhs, rhs, opts)
 
-  -- Lhs that contains <Plug>, <Sid>, <Snr> and <Mop> will not be processed
+  -- Lhs that contains <Plug>, <Sid> and <Snr> will not be processed
   if not u.lhs_forbidden(lhs) then
     -- Translate mapping for each langs in config.use_layouts
     for _, lang in ipairs(config.config.use_layouts) do
@@ -48,6 +50,34 @@ function M.map(mode, lhs, rhs, opts)
 
       if tr_lhs ~= lhs then
         map(mode, tr_lhs, rhs, opts)
+      end
+    end
+  end
+end
+
+---Wrapper of vim.keymap.set with same contract
+---@param mode string|table Same mode short names as |nvim_set_keymap()|
+---@param lhs string Left-hand side |{lhs}| of the mapping.
+---@param opts table|nil A table of |:map-arguments|.
+function M.del(mode, lhs, opts)
+  opts = opts or nil
+
+  -- Default mapping
+  del(mode, lhs, opts)
+
+  mode = type(mode) == 'table' and mode or { mode }
+
+  -- Lhs that contains <Plug>, <Sid> and <Snr> will not be processed
+  if not u.lhs_forbidden(lhs) then
+    -- Translate mapping for each langs in config.use_layouts
+    for _, lang in ipairs(config.config.use_layouts) do
+      local tr_lhs = u.translate_keycode(lhs, lang)
+      local has = u.every(mode, function(m)
+        return vim.fn.maparg(tr_lhs, m) ~= ''
+      end)
+
+      if tr_lhs ~= lhs and has then
+        del(mode, tr_lhs, opts)
       end
     end
   end

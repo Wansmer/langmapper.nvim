@@ -17,7 +17,7 @@ end
 ---@param tbl table List-like table
 ---@param cb function Callback for checking every item
 ---@return boolean
-local function some(tbl, cb)
+function M.some(tbl, cb)
   if not vim.tbl_islist(tbl) or vim.tbl_isempty(tbl) then
     return false
   end
@@ -31,6 +31,25 @@ local function some(tbl, cb)
   return false
 end
 
+---Checking if every item of list meets the condition.
+---Empty list or non-list table, returning false.
+---@param tbl table List-like table
+---@param cb function Callback for checking every item
+---@return boolean
+function M.every(tbl, cb)
+  if type(tbl) ~= 'table' or not vim.tbl_islist(tbl) or M.is_empty(tbl) then
+    return false
+  end
+
+  for _, item in ipairs(tbl) do
+    if not cb(item) then
+      return false
+    end
+  end
+
+  return true
+end
+
 ---Checks if a table is dict
 ---@param tbl any
 ---@return boolean
@@ -40,11 +59,16 @@ local function is_dict(tbl)
   end
 
   local keys = vim.tbl_keys(tbl)
-  return some(keys, function(a)
+  return M.some(keys, function(a)
     return type(a) ~= 'number'
   end)
 end
 
+---Update description of mapping
+---@param old_desc string
+---@param method string
+---@param lhs string
+---@return string
 function M.update_desc(old_desc, method, lhs)
   old_desc = old_desc and old_desc or ''
   local pack = old_desc ~= '' and ' for [' .. old_desc .. ']' or ''
@@ -122,7 +146,7 @@ function M.translate_keycode(lhs, lang, base_layout)
   end
 
   local is_in_keycode = function(idx)
-    return some(keycode_ranges, function(range)
+    return M.some(keycode_ranges, function(range)
       return idx >= range[1] and idx <= range[2]
     end)
   end
@@ -185,7 +209,7 @@ function M.ctrls_remap()
   local function remap_ctrl(list, from, to)
     for _, char in ipairs(vim.fn.uniq(list)) do
       -- No use short values of modes like ' ', '!', 'l'
-      local modes = { 'n', 'x', 's', 'o', 'i', 'c', 't' }
+      local modes = { 'n', 'x', 's', 'o', 'i', 'c', 't', 'v' }
       local keycode = '<C-' .. char .. '>'
 
       local tr_keycode = '<C-' .. vim.fn.tr(char, from, to) .. '>'
@@ -198,8 +222,9 @@ function M.ctrls_remap()
     local config = c.config
     local layout = config.layouts[lang]
     local default_layout = layout.default_layout and layout.default_layout or config.default_layout
-
-    local en_list = vim.split(default_layout:lower(), '', { plain = true })
+    -- Mapping with ctrl is case-insensitive. Prevents double mappings.
+    local lowers_and_special = default_layout:gsub('%u', '')
+    local en_list = vim.split(lowers_and_special, '', { plain = true })
 
     remap_ctrl(en_list, default_layout, config.layouts[lang].layout)
   end
@@ -297,8 +322,8 @@ end
 ---@param lhs string
 ---@return boolean
 function M.lhs_forbidden(lhs)
-  local matches = { '<plug>', '<sid>', '<snr>', '<nop>' }
-  return some(matches, function(m)
+  local matches = { '<plug>', '<sid>', '<snr>' }
+  return M.some(matches, function(m)
     return string.lower(lhs):match(m)
   end)
 end
@@ -309,13 +334,13 @@ end
 ---@param mappings table List of mapping
 ---@return boolean
 local function has_map(lhs, map, mappings)
-  return some(mappings, function(el)
+  return M.some(mappings, function(el)
     return el.lhs == lhs and el.mode == map.mode and el.buffer == map.opts.buffer
   end)
 end
 
 local function autoremap(scope)
-  local modes = { 'n', 'v', 'x' }
+  local modes = c.config.autoremap_modes or { 'n', 'v', 'x', 's' }
   local bufnr = scope == 'buffer' and vim.api.nvim_get_current_buf() or nil
   local mappings = {}
 
@@ -347,6 +372,7 @@ local function autoremap(scope)
 
         -- No need original opts because uses `nvim feedkeys()`
         local opts = {
+          -- `bufnr` must be nill for `global` scope, otherwise the keymap will not be global
           buffer = bufnr,
           desc = M.update_desc(map.opts.desc, 'feedkeys', map.lhs),
         }
@@ -365,11 +391,14 @@ local function autoremap(scope)
   end
 end
 
+---Adds translated mappings for global
 function M.autoremap_global()
   autoremap('global')
 end
 
+---Adds translated mappings for buffer
 function M.autoremap_buffer()
+  -- Different plugins set their local-buffer mappings while different events. That's why need to handle so many events.
   vim.api.nvim_create_autocmd({
     'BufAdd',
     'BufNew',
