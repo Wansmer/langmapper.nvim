@@ -324,6 +324,12 @@ local function to_keymap_contract(maparg)
     buffer = maparg.buffer,
     desc = maparg.desc,
   }, collect_bool_opts(maparg, booleans))
+
+  if opts.noremap then
+    opts.remap = not opts.noremap
+    opts.noremap = nil
+  end
+
   local res = { lhs = '', rhs = '', mode = '', opts = opts }
   return collect_units(res, maparg)
 end
@@ -417,6 +423,29 @@ function M._autoremap_buffer()
       end)
     end,
   })
+end
+
+function M._bind(cb, first)
+  return function(...)
+    return cb(first, ...)
+  end
+end
+
+-- Translate mapping for each langs in config.use_layouts
+function M._map_for_layouts(mode, lhs, rhs, opts, map_cb)
+  for _, lang in ipairs(c.config.use_layouts) do
+    local tr_lhs = M.translate_keycode(lhs, lang)
+
+    if not opts then
+      opts = { desc = M.update_desc(nil, 'translate', lhs) }
+    else
+      opts.desc = M.update_desc(opts.desc, 'translate', lhs)
+    end
+
+    if tr_lhs ~= lhs then
+      map_cb(mode, tr_lhs, rhs, opts)
+    end
+  end
 end
 
 return M
