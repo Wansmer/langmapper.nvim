@@ -3,7 +3,7 @@ local u = require('langmapper.utils')
 describe('Langmapper: API', function()
   require('langmapper').setup()
 
-  -- Mappings before `autoremap()` will call
+  -- Mappings before `automapping()` will call
   local mappings_before = {
     ['<leader>a'] = '<leader>ф',
     ['<leader>b'] = '<leader>и',
@@ -12,7 +12,7 @@ describe('Langmapper: API', function()
   for key, _ in pairs(mappings_before) do
     vim.keymap.set('n', key, 'l')
   end
-  require('langmapper').autoremap()
+  require('langmapper').automapping()
 
   local utils = require('langmapper.utils')
   local map = require('langmapper').map
@@ -115,7 +115,7 @@ describe('Langmapper: API', function()
 
   for key, val in pairs(builtins) do
     local rhs = vim.fn.maparg(key, 'n')
-    it('`autoremap()`: remaped builtins nvim "' .. key .. '" for ' .. rhs .. ' to "' .. val .. '"', function()
+    it('`automapping()`: remaped builtins nvim "' .. key .. '" for ' .. rhs .. ' to "' .. val .. '"', function()
       local has = vim.fn.maparg(val, 'n') ~= ''
       assert.is_true(has)
     end)

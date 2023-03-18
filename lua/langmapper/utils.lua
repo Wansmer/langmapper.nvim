@@ -67,7 +67,7 @@ local function is_dict(tbl)
 end
 
 ---Update description of mapping
----@param old_desc string
+---@param old_desc|nil string
 ---@param method string
 ---@param lhs string
 ---@return string
@@ -356,7 +356,7 @@ local function has_map(lhs, map, mappings)
 end
 
 local function autoremap(scope)
-  local modes = c.config.autoremap_modes or { 'n', 'v', 'x', 's' }
+  local modes = c.config.automapping_modes or { 'n', 'v', 'x', 's' }
   local bufnr = scope == 'buffer' and vim.api.nvim_get_current_buf() or nil
   local mappings = {}
 

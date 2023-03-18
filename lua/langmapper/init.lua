@@ -11,13 +11,13 @@ M.original_set = vim.keymap.set
 ---Original function `vim.keymap.del`. Useful when `hack_keymap` is `true`
 M.original_del = vim.keymap.del
 ---Original function `nvim_set_keymap`. Useful when `hack_keymap` is `true`
-M.old_set_keymap = vim.api.nvim_set_keymap
+M.original_set_keymap = vim.api.nvim_set_keymap
 ---Original function `nvim_buf_set_keymap`. Useful when `hack_keymap` is `true`
-M.old_buf_set_keymap = vim.api.nvim_buf_set_keymap
+M.original_buf_set_keymap = vim.api.nvim_buf_set_keymap
 ---Original function `nvim_set_keymap`. Useful when `hack_keymap` is `true`
-M.old_del_keymap = vim.api.nvim_del_keymap
+M.original_del_keymap = vim.api.nvim_del_keymap
 ---Original function `nvim_buf_set_keymap`. Useful when `hack_keymap` is `true`
-M.old_buf_del_keymap = vim.api.nvim_buf_del_keymap
+M.original_buf_del_keymap = vim.api.nvim_buf_del_keymap
 
 ---Setup langmapper
 ---@param opts? table
@@ -50,10 +50,10 @@ end
 function M.put_back_keymap()
   vim.keymap.set = M.original_set
   vim.keymap.del = M.original_del
-  vim.api.nvim_set_keymap = M.old_set_keymap
-  vim.api.nvim_buf_set_keymap = M.old_buf_set_keymap
-  vim.api.nvim_del_keymap = M.old_del_keymap
-  vim.api.nvim_buf_del_keymap = M.old_buf_del_keymap
+  vim.api.nvim_set_keymap = M.original_set_keymap
+  vim.api.nvim_buf_set_keymap = M.original_buf_set_keymap
+  vim.api.nvim_del_keymap = M.original_del_keymap
+  vim.api.nvim_buf_del_keymap = M.original_buf_del_keymap
 end
 
 ---Wrapper of vim.keymap.set with same contract
@@ -101,9 +101,9 @@ end
 function M.wrap_nvim_set_keymap(mode, lhs, rhs, opts)
   opts = opts or {}
   -- Default mapping
-  M.old_set_keymap(mode, lhs, rhs, opts)
+  M.original_set_keymap(mode, lhs, rhs, opts)
   -- Translated mapping
-  u._map_for_layouts(mode, lhs, rhs, opts, M.old_set_keymap)
+  u._map_for_layouts(mode, lhs, rhs, opts, M.original_set_keymap)
 end
 
 ---Wrapper of `nvim_buf_set_keymap` with same contract. See `:h nvim_buf_set_keymap()`
@@ -116,23 +116,23 @@ end
 function M.wrap_nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts)
   opts = opts or {}
   -- Default mapping
-  M.old_buf_set_keymap(buffer, mode, lhs, rhs, opts)
+  M.original_buf_set_keymap(buffer, mode, lhs, rhs, opts)
   -- Translated mapping
-  u._map_for_layouts(mode, lhs, rhs, opts, u._bind(M.old_buf_set_keymap, buffer))
+  u._map_for_layouts(mode, lhs, rhs, opts, u._bind(M.original_buf_set_keymap, buffer))
 end
 
 ---Wrapper of `nvim_del_keymap` with same contract. See `:h nvim_del_keymap()`
 ---@param mode string Mode short-name
 ---@param lhs string Left-hand-side |{lhs}| of the mapping.
 function M.wrap_nvim_del_keymap(mode, lhs)
-  M.old_del_keymap(mode, lhs)
+  M.original_del_keymap(mode, lhs)
   -- Delete translated mapping for each langs in config.use_layouts
   for _, lang in ipairs(config.config.use_layouts) do
     local tr_lhs = u.translate_keycode(lhs, lang)
     local has = vim.fn.maparg(tr_lhs, mode) ~= ''
 
     if tr_lhs ~= lhs and has then
-      M.old_del_keymap(mode, tr_lhs)
+      M.original_del_keymap(mode, tr_lhs)
     end
   end
 end
@@ -142,28 +142,34 @@ end
 ---@param mode string Mode short-name
 ---@param lhs string Left-hand-side |{lhs}| of the mapping.
 function M.wrap_nvim_buf_del_keymap(buffer, mode, lhs)
-  M.old_buf_del_keymap(buffer, mode, lhs)
+  M.original_buf_del_keymap(buffer, mode, lhs)
   -- Delete translated mapping for each langs in config.use_layouts
   for _, lang in ipairs(config.config.use_layouts) do
     local tr_lhs = u.translate_keycode(lhs, lang)
     local has = vim.fn.maparg(tr_lhs, mode) ~= ''
 
     if tr_lhs ~= lhs and has then
-      M.old_buf_del_keymap(buffer, mode, tr_lhs)
+      M.original_buf_del_keymap(buffer, mode, tr_lhs)
     end
   end
 end
 
----Gets the output of `nvim_get_keymap` for all modes listed in the `autoremap_modes`,
+---Gets the output of `nvim_get_keymap` for all modes listed in the `automapping_modes`,
 ---and sets the translated mappings using `nvim_feedkeys`.
 ---Then sets event handlers `{ 'BufWinEnter', 'LspAttach' }` to do the same with outputting
 ---`nvim_buf_get_keymap` for each open buffer.
 ---Must be called at the very end of `init.lua`,
 ---after all plugins have been loaded and all key bindings have been set.
 ---Does not handle mappings for lazy-loaded plugins. To avoid it, see `hack_keymap`.
-function M.autoremap()
-  u._autoremap_global()
-  u._autoremap_buffer()
+---@param opts table? {global=boolean|nil, buffer=boolean|nil} Both true by default
+function M.automapping(opts)
+  opts = vim.tbl_extend('force', opts or {}, { buffer = true, global = true })
+  if opts.global then
+    u._autoremap_global()
+  end
+  if opts.buffer then
+    u._autoremap_buffer()
+  end
 end
 
 return M
