@@ -33,13 +33,48 @@ M.config = {
       ---Should return string with id of layout
       ---@return string
       get_current_layout_id = function()
-        local cmd = '/opt/homebrew/bin/im-select'
-        local output = vim.split(vim.trim(vim.fn.system(cmd)), '\n')
-        return output[#output]
+        local cmd = 'im-select'
+        if vim.fn.executable(cmd) then
+          local output = vim.split(vim.trim(vim.fn.system(cmd)), '\n')
+          return output[#output]
+        end
       end,
     },
   },
 }
+
+local function check_deprecated(opts)
+  if not vim.tbl_isempty(opts) then
+    local msg = 'Option "%s" is deprecated. Please, check updated documentation for configure Langmapper'
+
+    if opts.remap_specials_keys ~= nil then
+      vim.notify(msg:format('remap_specials_keys'), vim.log.levels.WARN, { title = 'Langmapper:' })
+    end
+
+    for _, lang in ipairs(vim.tbl_keys(M.config.layouts)) do
+      local deprecated = { 'special_remap', 'leaders' }
+      for _, option in ipairs(deprecated) do
+        if M.config.layouts[lang][option] then
+          vim.notify(msg:format(option), vim.log.levels.WARN, { title = 'Langmapper:' })
+        end
+      end
+    end
+  end
+end
+
+local function check_layouts()
+  local def_len = vim.fn.strdisplaywidth(M.config.default_layout)
+  for _, lang in ipairs(vim.tbl_keys(M.config.layouts)) do
+    local layout = M.config.layouts[lang]
+    def_len = layout.default_layout and vim.fn.strdisplaywidth(layout.default_layout) or def_len
+    local l_len = vim.fn.strdisplaywidth(layout.layout)
+    if def_len ~= l_len then
+      local msg =
+        'Langmapper: "default_layout" and "layout" contain different number of characters. Check your config for "%s".'
+      error(msg:format(lang), 0)
+    end
+  end
+end
 
 ---Update configuration
 ---@param opts table|nil
@@ -51,6 +86,9 @@ function M.update_config(opts)
   else
     M.config.use_layouts = vim.tbl_keys(M.config.layouts)
   end
+
+  check_layouts()
+  check_deprecated(opts)
 end
 
 return M

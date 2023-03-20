@@ -22,15 +22,16 @@ M.original_buf_del_keymap = vim.api.nvim_buf_del_keymap
 ---Setup langmapper
 ---@param opts? table
 function M.setup(opts)
-  config.update_config(opts)
+  local ok, info = pcall(config.update_config, opts)
+  if not ok then
+    vim.notify(info, vim.log.error, { title = 'Langmapper:' })
+    return
+  end
+
+  u._expand_langmap()
 
   if config.config.map_all_ctrl then
     u._ctrls_remap()
-  end
-
-  if config.config.remap_specials_keys then
-    -- u._system_remap()
-    u._expand_langmap()
   end
 
   if config.config.hack_keymap then
