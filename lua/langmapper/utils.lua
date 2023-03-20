@@ -229,9 +229,16 @@ function M._ctrls_remap()
       local modes = { 'n', 'x', 's', 'o', 'i', 'c', 't', 'v' }
       local keycode = '<C-' .. char .. '>'
 
-      local tr_keycode = '<C-' .. vim.fn.tr(char, from, to) .. '>'
-      local desc = M.update_desc(keycode, 'translate', tr_keycode)
-      keymap(modes, tr_keycode, keycode, { remap = true, desc = desc })
+      local tr_char = vim.fn.tr(char, from, to)
+      local tr_keycode = '<C-' .. tr_char .. '>'
+      local desc = M.update_desc(keycode, 'feedkeys', tr_keycode)
+      -- Prevent recursion
+      if not from:find(tr_char, 1, true) then
+        local term_keycodes = vim.api.nvim_replace_termcodes(keycode, true, true, true)
+        keymap(modes, tr_keycode, function()
+          vim.api.nvim_feedkeys(term_keycodes, 'm', true)
+        end, { desc = desc })
+      end
     end
   end
 
@@ -276,7 +283,9 @@ function M._expand_langmap()
     local map = c.config.layouts[lang].layout
     local base_list = vim.split(base, '', { plain = true })
     local feed = function(keys)
-      vim.api.nvim_feedkeys(keys, 'n', true)
+      local mode = get_feedkeys_mode(keys)
+      keys = vim.api.nvim_replace_termcodes(keys, true, true, true)
+      vim.api.nvim_feedkeys(keys, mode, true)
     end
 
     for i = 1, #base do
@@ -289,50 +298,13 @@ function M._expand_langmap()
           end)
         elseif can_check_layout then
           vim.keymap.set('n', tr_char, function()
-            if get_layout_id() == 'com.apple.keylayout.RussianWin' then
+            if get_layout_id() == c.config.layouts[lang].id then
               feed(char)
             else
               feed(tr_char)
             end
-          end)
+          end, { desc = 'Langmapper: (feedkeys)' })
         end
-      end
-    end
-  end
-end
-
----Remapping special keys like '.', ',', ':', ';'
-function M._system_remap()
-  local os = vim.loop.os_uname().sysname
-
-  local get_layout_id = c.config.os[os] and c.config.os[os].get_current_layout_id
-  local can_check_layout = get_layout_id and type(get_layout_id) == 'function'
-
-  local function feed_special(rhs_set, lhs, layout_id, feed_mode)
-    return function()
-      local layout = get_layout_id()
-      local rhs = layout ~= layout_id and lhs or rhs_set.rhs
-      vim.api.nvim_feedkeys(rhs, feed_mode, true)
-    end
-  end
-
-  for _, lang in ipairs(c.config.use_layouts) do
-    local special_remap = c.config.layouts[lang].special_remap
-    local id = c.config.layouts[lang].id
-
-    for lhs, rhs_set in pairs(special_remap) do
-      local desc = M.update_desc(nil, 'feedkeys', rhs_set.rhs)
-      local feed_mode = rhs_set.feed_mode or get_feedkeys_mode(rhs_set.rhs)
-
-      if rhs_set.check_layout then
-        if can_check_layout then
-          local cb = feed_special(rhs_set, lhs, id, feed_mode)
-          keymap('n', lhs, cb, { desc = desc })
-        end
-      else
-        local remap = feed_mode == 'm' and true or false
-        local opts = { remap = remap, desc = desc }
-        keymap('n', lhs, rhs_set.rhs, opts)
       end
     end
   end

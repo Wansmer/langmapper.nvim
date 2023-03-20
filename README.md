@@ -21,18 +21,25 @@ A plugin that makes Neovim more friendly to non-English input methods 🤝
 
 ## TLDR
 
-- Langmapper gets all globally registered custom and built-in mappings and creates translated mappings for another input method that cause the same actions;
+- Langmapper gets all globally registered custom and built-in mappings and
+  creates translated mappings for another input method that cause the same
+  actions;
 - Similar handles buffer-specific mappings for each buffer separately;
-- Generates translated keybindings for all built-in CTRL's bindings for all modes. (See `:h CTRL_`, `:h i_CTRL` etc.);
-- Provides utils for manual creation of mappings for all configured input methods with a single function;
-- Provides a "hack" on the built-in keymap methods to translate new mappings from plugins that were lazy-loaded;
-- Can perform different actions when entering the same character, depending on the current input method.
+- Generates translated keybindings for all built-in CTRL's bindings for all
+  modes. (See `:h CTRL_`, `:h i_CTRL` etc.);
+- Provides utils for manual creation of mappings for all configured input
+  methods with a single function;
+- Provides a "hack" on the built-in keymap methods to translate new mappings
+  from plugins that were lazy-loaded;
+- Can perform different actions when entering the same character, depending on
+  the current input method.
 
 ## Requirements
 
 - [Neovim 0.8+](https://github.com/neovim/neovim/releases)
 - CLI utility to determine the current input method
-- Configured [vim.opt.langmap](https://neovim.io/doc/user/options.html#'langmap') for your input method
+- Configured [vim.opt.langmap](https://neovim.io/doc/user/options.html#'langmap') for your
+  input method
 
 > Examples of CLI utilities:
 >
