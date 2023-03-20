@@ -169,13 +169,20 @@ function M.translate_keycode(lhs, lang)
 
   local tlhs = table.concat(trans_seq, '')
 
-  ---Force replace leaders if need
-  for key, repl in pairs(c.config.layouts[lang].leaders) do
-    local rg = vim.regex('\\c' .. key)
-    local range = { rg:match_str(tlhs) }
-    if repl and #range > 0 then
-      local found = tlhs:sub(unpack(range))
-      tlhs = tlhs:gsub(found, repl)
+  local leaders = {
+    ['<LEADER>'] = vim.g.mapleader,
+    ['<LOCALLEADER>'] = vim.g.maplocalleader,
+  }
+
+  for leader, val in pairs(leaders) do
+    if base_layout:find(val, 1, true) then
+      local repl = vim.fn.tr(val, base_layout, layout)
+      local rg = vim.regex('\\c' .. leader)
+      local range = { rg:match_str(tlhs) }
+      if repl and #range > 0 then
+        local found = tlhs:sub(unpack(range))
+        tlhs = tlhs:gsub(found, repl)
+      end
     end
   end
 
@@ -250,6 +257,48 @@ local function get_feedkeys_mode(rhs)
     return 'n'
   end
   return 'm'
+end
+
+function M._expand_langmap()
+  local os = vim.loop.os_uname().sysname
+  local get_layout_id = c.config.os[os] and c.config.os[os].get_current_layout_id
+  local can_check_layout = get_layout_id and type(get_layout_id) == 'function'
+  local lm = vim.opt.langmap:get()
+
+  local function in_langmap(char, tr_char)
+    return M.some(lm, function(map)
+      return map:find(char, 1, true) and map:find(tr_char, 1, true)
+    end)
+  end
+
+  for _, lang in ipairs(c.config.use_layouts) do
+    local base = c.config.layouts[lang].default_layout or c.config.default_layout
+    local map = c.config.layouts[lang].layout
+    local base_list = vim.split(base, '', { plain = true })
+    local feed = function(keys)
+      vim.api.nvim_feedkeys(keys, 'n', true)
+    end
+
+    for i = 1, #base do
+      local char = base_list[i]
+      local tr_char = vim.fn.tr(char, base, map)
+      if char ~= tr_char and not in_langmap(char, tr_char) then
+        if not base:find(tr_char, 1, true) then
+          vim.keymap.set('n', tr_char, function()
+            feed(char)
+          end)
+        elseif can_check_layout then
+          vim.keymap.set('n', tr_char, function()
+            if get_layout_id() == 'com.apple.keylayout.RussianWin' then
+              feed(char)
+            else
+              feed(tr_char)
+            end
+          end)
+        end
+      end
+    end
+  end
 end
 
 ---Remapping special keys like '.', ',', ':', ';'

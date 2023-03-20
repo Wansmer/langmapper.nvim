@@ -29,7 +29,8 @@ function M.setup(opts)
   end
 
   if config.config.remap_specials_keys then
-    u._system_remap()
+    -- u._system_remap()
+    u._expand_langmap()
   end
 
   if config.config.hack_keymap then
