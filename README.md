@@ -21,23 +21,17 @@ A plugin that makes Neovim more friendly to non-English input methods 🤝
 
 ## TLDR
 
-- Langmapper gets all globally registered custom and built-in mappings and
-  creates translated mappings for another input method that cause the same
-  actions;
-- Similar handles buffer-specific mappings for each buffer separately;
-- Generates translated keybindings for all built-in CTRL's bindings for all
-  modes. (See `:h CTRL_`, `:h i_CTRL` etc.);
-- Provides utils for manual creation of mappings for all configured input
-  methods with a single function;
-- Provides a "hack" on the built-in keymap methods to translate new mappings
-  from plugins that were lazy-loaded;
-- Can perform different actions when entering the same character, depending on
-  the current input method.
+- Translating all globally registered mappings;
+- Translating local registered mappings for each buffer;
+- Registering translated mappings for all built-in CTRL+ sequence;
+- Provides utils for manual registration original and translated mapping with single function;
+- Hacks built-in keymap's methods to translate all registered mappings (including mappings from lazy-loaded plugins);
+- Real-time normal mode command processing variability depending on the input method.
 
 ## Requirements
 
 - [Neovim 0.8+](https://github.com/neovim/neovim/releases)
-- CLI utility to determine the current input method
+- CLI utility to determine the current input method _(optional)_
 - Configured [vim.opt.langmap](https://neovim.io/doc/user/options.html#'langmap') for your
   input method
 
@@ -82,7 +76,8 @@ require('langmapper').automapping({ global = true, buffer = true })
 
 ## Settings
 
-First, make sure you have a `langmap` configured. Langmapper only handles key mappings. All other movement commands depend on the `langmap`.
+First, make sure you have a `langmap` configured. Langmapper only handles key
+mappings. All other movement commands depend on the `langmap`.
 
 <details>
 
@@ -93,7 +88,7 @@ local default_config = {
   ---@type boolean Add mapping for every CTRL+ binding or not.
   map_all_ctrl = true,
   ---@type boolean Wrap all keymap's functions (keymap.set, nvim_set_keymap, etc)
-  hack_keymap = false,
+  hack_keymap = true,
   ---@type table Modes whose mappings will be checked during automapping.
   ---Each mode must be specified, even if some of them extend others.
   ---E.g., 'v' includes 'x' and 's', but must be listed separate.
@@ -109,59 +104,24 @@ local default_config = {
       ---@type string Name of your second keyboard layout in system.
       ---It should be the same as result string of `get_current_layout_id()`
       id = 'com.apple.keylayout.RussianWin',
-      ---@type string if you need to specify default layout for this fallback layout
-      default_layout = nil,
       ---@type string Fallback layout to translate. Should be same length as default layout
       layout = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯБЮЖЭХЪËфисвуапршолдьтщзйкыегмцчнябюжэхъё',
-      ---@type table Dictionary of pairs: <leaderkeycode> and replacement
-      leaders = {
-        ---@type string|nil If not nil, key will be replaced in mappings.
-        ---Useful when different characters are in place of your leader in different input methods
-        ['<Localleader>'] = 'ж', -- I use local leader ';' and it 'ж' in second input method
-        ['<Leader>'] = nil, -- If leader is ' ' (space), it can be nil, because space is always space
-      },
-      ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
-      ---rhs: normal mode command to execute
-      ---feed_mode:
-      ---  n - use nvim-default behavior (like remap = false)
-      ---  m - use remapping behavior if key was remmaping by user or another plugin (like remap = true)
-      ---  nil - if nil, feed_mode will autodetect (recomented)
-      ---  (for more info see :h feedkeys(). Here use n and m only)
-      special_remap = {
-        ['Ж'] = { rhs = ':', feed_mode = nil, check_layout = false },
-        ['ж'] = { rhs = ';', feed_mode = nil, check_layout = false },
-        ['ю'] = { rhs = '.', feed_mode = nil, check_layout = false },
-        ['б'] = { rhs = ',', feed_mode = nil, check_layout = false },
-        ['э'] = { rhs = "'", feed_mode = nil, check_layout = false },
-        ['Э'] = { rhs = '"', feed_mode = nil, check_layout = false },
-        ['х'] = { rhs = '[', feed_mode = nil, check_layout = false },
-        ['ъ'] = { rhs = ']', feed_mode = nil, check_layout = false },
-        ['Х'] = { rhs = '{', feed_mode = nil, check_layout = false },
-        ['Ъ'] = { rhs = '}', feed_mode = nil, check_layout = false },
-        ['ё'] = { rhs = '`', feed_mode = nil, check_layout = false },
-        ['Ë'] = { rhs = '~', feed_mode = nil, check_layout = false },
-        --[[ When some keys conflict ]]
-        -- On my second keyboard-layout, the '/' is in place of a dot ('.').
-        -- I need to check current input method (check_layout) to send '/' character instead of dot.
-        -- It will be work if you have `get_current_layout_id()` for your OS.
-        ['.'] = { rhs = '/', feed_mode = nil, check_layout = true },
-        ['/'] = { rhs = '|', feed_mode = nil, check_layout = true },
-        [','] = { rhs = '?', feed_mode = nil, check_layout = true },
-      },
+      ---@type string if you need to specify default layout for this fallback layout
+      default_layout = nil,
     },
   },
-  ---@type boolean Remap specials keys (see layouts[youlayout].special_remap)
-  remap_specials_keys = true,
   os = {
-    -- Darwin - Mac OS, the result of `vim.loop.os_uname()`
+    -- Darwin - Mac OS, the result of `vim.loop.os_uname().sysname`
     Darwin = {
       ---Function for getting current keyboard layout on your OS
       ---Should return string with id of layout
       ---@return string
       get_current_layout_id = function()
-        local cmd = '/opt/homebrew/bin/im-select'
-        local output = vim.split(vim.trim(vim.fn.system(cmd)), '\n')
-        return output[#output]
+        local cmd = 'im-select'
+        if vim.fn.executable(cmd) then
+          local output = vim.split(vim.trim(vim.fn.system(cmd)), '\n')
+          return output[#output]
+        end
       end,
     },
   },

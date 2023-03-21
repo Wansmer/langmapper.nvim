@@ -4,7 +4,7 @@ M.config = {
   ---@type boolean Add mapping for every CTRL+ binding or not.
   map_all_ctrl = true,
   ---@type boolean Wrap all keymap's functions (keymap.set, nvim_set_keymap, etc)
-  hack_keymap = false,
+  hack_keymap = true,
   ---@type table Modes whose mappings will be checked during automapping.
   ---Each mode must be specified, even if some of them extend others.
   ---E.g., 'v' includes 'x' and 's', but must be listed separate.
