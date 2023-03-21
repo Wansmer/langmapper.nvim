@@ -1,0 +1,405 @@
+*langmapper.txt*         For Neovim >= 0.8.0        Last change: 2023 March 20
+
+==============================================================================
+Table of Contents                               *langmapper-table-of-contents*
+
+1. Langmapper                                          |langmapper-langmapper|
+  - TLDR                                          |langmapper-langmapper-tldr|
+  - Requirements                          |langmapper-langmapper-requirements|
+  - Instalation                            |langmapper-langmapper-instalation|
+  - Settings                                  |langmapper-langmapper-settings|
+  - Usage                                        |langmapper-langmapper-usage|
+  - API                                            |langmapper-langmapper-api|
+  - Utils                                        |langmapper-langmapper-utils|
+
+==============================================================================
+1. Langmapper                                          *langmapper-langmapper*
+
+A plugin that makes Neovim more friendly to non-English input methods
+
+
+TLDR                                              *langmapper-langmapper-tldr*
+
+
+- Langmappergets all globally registered custom and built-in mappings and creates translated mappings for another input method that cause the same actions;
+- Similar handles buffer-specific mappings for each buffer separately;
+- Generates translated keybindings for all built-in CTRL’s bindings for all modes. (See `:h CTRL_`, `:h i_CTRL` etc.);
+- Provides utils for manual creation of mappings for all configured input methods with a single function;
+- Provides a "hack" on the built-in keymap methods to translate new mappings from plugins that were lazy-loaded;
+- Can perform different actions when entering the same character, depending on the current input method.
+
+
+REQUIREMENTS                              *langmapper-langmapper-requirements*
+
+
+- Neovim 0.8+ <https://github.com/neovim/neovim/releases>
+- CLI utility to determine the current input method
+- Configured |vim.opt.langmap| for your input method
+
+
+  Examples of CLI utilities:
+  - im-select <https://github.com/daipeihust/im-select> for Mac and Windows
+  - xkb-switch <https://github.com/grwlf/xkb-switch> for Linux
+
+INSTALATION                                *langmapper-langmapper-instalation*
+
+With Lazy.nvim <https://github.com/folke/lazy.nvim>
+
+>lua
+    return {
+      'Wansmer/langmapper.nvim',
+      lazy = false,
+      priority = 1, -- High priority is needed if you will use `autoremap()`
+      config = function()
+        require('langmapper').setup({--[[ your config ]]})
+      end,
+    }
+<
+
+WithPacker.nvim <https://github.com/wbthomason/packer.nvim>
+
+>lua
+    use({
+      'Wansmer/langmapper.nvim',
+      config = function()
+        require('langmapper').setup({--[[ your config ]]})
+      end,
+    })
+<
+
+Afterall the contents of your `init.lua` (optional):
+
+>lua
+    -- code
+    require('langmapper').automapping({ global = true, buffer = true })
+    -- end of init.lua
+<
+
+
+SETTINGS                                      *langmapper-langmapper-settings*
+
+First, make sure you have a `langmap` configured. Langmapper only handles key
+mappings. All other movement commands depend on the `langmap`.
+
+Show default config ~
+
+>lua
+    local default_config = {
+      ---@type boolean Add mapping for every CTRL+ binding or not.
+      map_all_ctrl = true,
+      ---@type boolean Wrap all keymap's functions (keymap.set, nvim_set_keymap, etc)
+      hack_keymap = false,
+      ---@type table Modes whose mappings will be checked during automapping.
+      ---Each mode must be specified, even if some of them extend others.
+      ---E.g., 'v' includes 'x' and 's', but must be listed separate.
+      automapping_modes = { 'n', 'v', 'x', 's' },
+      ---@type string Standart English layout (on Mac, It may be different in your case.)
+      default_layout = [[ABCDEFGHIJKLMNOPQRSTUVWXYZ<>:"{}~abcdefghijklmnopqrstuvwxyz,.;'[]`]],
+      ---@type string[] Names of layouts. If empty, will handle all configured layouts.
+      use_layouts = {},
+      ---@type table Fallback layouts
+      layouts = {
+        ---@type table Fallback layout item. Name of key is a name of language
+        ru = {
+          ---@type string Name of your second keyboard layout in system.
+          ---It should be the same as result string of `get_current_layout_id()`
+          id = 'com.apple.keylayout.RussianWin',
+          ---@type string if you need to specify default layout for this fallback layout
+          default_layout = nil,
+          ---@type string Fallback layout to translate. Should be same length as default layout
+          layout = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯБЮЖЭХЪËфисвуапршолдьтщзйкыегмцчнябюжэхъё',
+          ---@type table Dictionary of pairs: <leaderkeycode> and replacement
+          leaders = {
+            ---@type string|nil If not nil, key will be replaced in mappings.
+            ---Useful when different characters are in place of your leader in different input methods
+            ['<Localleader>'] = 'ж', -- I use local leader ';' and it 'ж' in second input method
+            ['<Leader>'] = nil, -- If leader is ' ' (space), it can be nil, because space is always space
+          },
+          ---@type table Using to remapping special symbols in normal mode. To use the same keys you are used to
+          ---rhs: normal mode command to execute
+          ---feed_mode:
+          ---  n - use nvim-default behavior (like remap = false)
+          ---  m - use remapping behavior if key was remmaping by user or another plugin (like remap = true)
+          ---  nil - if nil, feed_mode will autodetect (recomented)
+          ---  (for more info see :h feedkeys(). Here use n and m only)
+          special_remap = {
+            ['Ж'] = { rhs = ':', feed_mode = nil, check_layout = false },
+            ['ж'] = { rhs = ';', feed_mode = nil, check_layout = false },
+            ['ю'] = { rhs = '.', feed_mode = nil, check_layout = false },
+            ['б'] = { rhs = ',', feed_mode = nil, check_layout = false },
+            ['э'] = { rhs = "'", feed_mode = nil, check_layout = false },
+            ['Э'] = { rhs = '"', feed_mode = nil, check_layout = false },
+            ['х'] = { rhs = '[', feed_mode = nil, check_layout = false },
+            ['ъ'] = { rhs = ']', feed_mode = nil, check_layout = false },
+            ['Х'] = { rhs = '{', feed_mode = nil, check_layout = false },
+            ['Ъ'] = { rhs = '}', feed_mode = nil, check_layout = false },
+            ['ё'] = { rhs = '`', feed_mode = nil, check_layout = false },
+            ['Ë'] = { rhs = '~', feed_mode = nil, check_layout = false },
+            --[[ When some keys conflict ]]
+            -- On my second keyboard-layout, the '/' is in place of a dot ('.').
+            -- I need to check current input method (check_layout) to send '/' character instead of dot.
+            -- It will be work if you have `get_current_layout_id()` for your OS.
+            ['.'] = { rhs = '/', feed_mode = nil, check_layout = true },
+            ['/'] = { rhs = '|', feed_mode = nil, check_layout = true },
+            [','] = { rhs = '?', feed_mode = nil, check_layout = true },
+          },
+        },
+      },
+      ---@type boolean Remap specials keys (see layouts[youlayout].special_remap)
+      remap_specials_keys = true,
+      os = {
+        -- Darwin - Mac OS, the result of `vim.loop.os_uname()`
+        Darwin = {
+          ---Function for getting current keyboard layout on your OS
+          ---Should return string with id of layout
+          ---@return string
+          get_current_layout_id = function()
+            local cmd = '/opt/homebrew/bin/im-select'
+            local output = vim.split(vim.trim(vim.fn.system(cmd)), '\n')
+            return output[output]
+          end,
+        },
+      },
+    }
+<
+
+
+USAGE                                            *langmapper-langmapper-usage*
+
+
+SIMPLE ~
+
+Set up your `layout` in config, set `hack_keymap` to `true` and load Langmapper
+the first of the sheet of plugins, then call `langmapper.setup(opts)`.
+
+Under such conditions, all subsequent calls to `vim.keymap.set`,
+`vim.keymap.del`, `vim.api.nvim_(buf)_set_keymap` and
+`vim.api.nvim_(buf)_del_keymap` will be wrapped with a special function, which
+will automatically translate mappings and register them.
+
+This means that even in the case of lazy-loading, the mapping setup will still
+be processed and the translated mapping will be registered for it.
+
+If you need to handle built-in and vim script mappings too, call the
+`langmapper.automapping()` function at the very end of your `init.lua`.
+
+
+MANUALY ~
+
+Set up your `layout` in config, and call `langmapper.setup(opts)`.
+
+
+FOR REGULAR MAPPING:
+
+>lua
+    -- this function complitely repeat contract of vim.keymap.set
+    local map = require('langmapper').map
+    
+    map('n', '<Leader>e', '<Cmd>Neotree toggle focus<Cr>')
+<
+
+
+MAPPING INSIDE OTHER PLUGIN:
+
+>lua
+    -- Neo-tree config.
+    -- It will return a table with 'translated' keys and same values.
+    local map = require('langmapper.utils')
+    local window_mappings = mapper.trans_dict({
+      ['o'] = 'open',
+      ['sg'] = 'split_with_window_picker',
+      ['<leader>d'] = 'copy',
+    })
+<
+
+
+WITH AUTOMAPPING
+
+Add `langmapper.autoremap({ global = true, buffer = true })` to the end of your
+`init.lua`.
+
+It will autotranslate all registered mappings from `nvim_get_keymap()` and
+`nvim_buf_get_keymap()`.
+
+But it cannot handle mappings of lazy loaded plugins.
+
+
+  NOTE: all keys, that you’re using in `keys = {}` in `lazy.nvim` also will be
+  translated.
+
+API                                                *langmapper-langmapper-api*
+
+**Usage:**
+
+>lua
+    local langmapper = require('langmapper')
+    
+    langmapper.map(...)
+    langmapper.automapping(...)
+    -- etc
+<
+
+
+AUTOMAPPING() ~
+
+Gets the output of `nvim_get_keymap` for all modes listed in the
+`automapping_modes`, and sets the translated mappings using `nvim_feedkeys`.
+
+Then sets event handlers `{ 'BufWinEnter', 'LspAttach' }` to do the same with
+outputting `nvim_buf_get_keymap` for each open buffer.
+
+Must be called at the very end of `init.lua`, after all plugins have been
+loaded and all key bindings have been set.
+
+This function also handles mappings made via wim script.
+
+Does not handle mappings for lazy-loaded plugins. To avoid it, see
+`hack_keymap`.
+
+
+  NOTE: If you use `hack_keymap`, there are only one reason to use this function
+  it is auto-handling built-in mappings (e.g., for netrw, like 'gx') and if you
+  have mappings (or plugins with mappings) on vim script.
+>lua
+    ---@param opts {global=boolean|nil, buffer=boolean|nil}
+    function M.automapping(opts)
+<
+
+
+MAP()/DEL() ~
+
+Wrappers of `vim.keymap.set`  `vim.keymap.del` with same contract.
+
+`map()` - Sets the given `lhs`, then translates it to the configured input
+methods, and maps it with the same options.
+
+E.g.:
+
+`map('i', 'jk', '<Esc>')` will execute `vim.keymap.set('i', 'jk', '<Esc>)` and
+`vim.keymap.set('i', 'ол', <Esc>)`.
+
+`map('n', '<leader>a', ':echo 123')` will execute `vim.keymap.set('n',
+'<leader>a', ':echo 123')` and `vim.keymap.set('n', '<leader>ф', ':echo
+123')`.
+
+`lhs` with `<Plug>`, `<Sid>` and `<Snr>` will not translate and will be mapped
+as is.
+
+`del()` works in the same way, but with mappings removing.
+
+>lua
+    ---@param mode string|table Same mode short names as |nvim_set_keymap()|
+    ---@param lhs string Left-hand side |{lhs}| of the mapping.
+    ---@param rhs string|function Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
+    ---@param opts table|nil A table of |:map-arguments|.
+    function M.map(mode, lhs, rhs, opts)
+    
+    ---@param mode string|table Same mode short names as |nvim_set_keymap()|
+    ---@param lhs string Left-hand side |{lhs}| of the mapping.
+    ---@param opts table|nil A table of optional arguments:
+    ---  - buffer: (number or boolean) Remove a mapping from the given buffer.
+    ---  When "true" or 0, use the current buffer.
+    function M.del(mode, lhs, opts)
+<
+
+
+OTHER ~
+
+Original keymap’s functions, that were wrap with translates functions if
+`hack_keymap` is `true`
+
+>lua
+    -- When you don't need some mapping to be translated. For example, I don't translate `jk`.
+    `original_set()` -- vim.keymap.set
+    `original_del()` -- vim.keymap.del
+    `original_set_keymap()` -- vim.api.nvim_set_keymap
+    `original_buf_set_keymap() -- vim.api.nvim_buf_set_keymap
+    `original_del_keymap()` -- vim.api.nvim_del_keymap
+    `original_buf_del_keymap()` -- vim.api.nvim_buf_del_keymap
+    `put_back_keymap()` -- Set original functions back
+<
+
+Anotherfunctions-wrappers with translates and same contracts:
+
+>lua
+    `wrap_nvim_set_keymap()`
+    `wrap_nvim_del_keymap()`
+    `wrap_nvim_buf_set_keymap()`
+    `wrap_nvim_buf_del_keymap()`
+<
+
+
+UTILS                                            *langmapper-langmapper-utils*
+
+
+TRANSLATE_KEYCODE() ~
+
+Translate 'lhs' to 'lang' layout. If in 'lang' layout not specified
+`base_layout`, uses global `base_layout`
+
+>lua
+    ---@param lhs string Left-hand side |{lhs}| of the mapping.
+    ---@param lang string Name of preset for layout
+    ---@return string
+    function M.translate_keycode(lhs, lang)
+<
+
+**Example:**
+
+>lua
+    local utils = require('langmapper.utils')
+    local keycode = '<leader>gh'
+    local tr_keycode = utils.translate_keycode(keycode, 'ru') -- '<leader>пр'
+<
+
+
+TRANS_DICT() ~
+
+Translates each key of table for all layouts in `use_layouts` option
+(recursive).
+
+>lua
+    ---@param dict table Dict-like table
+    ---@return table
+    function M.trans_dict(dict)
+<
+
+**Example:**
+
+>lua
+    local keycode_dict = { ['s'] = false, ['<leader>'] = { ['d'] = 'copy' }, ['<S-TAB>'] = 'prev_source' }
+    local result = utils.trans_dict(keycode_dict)
+    -- {
+    --   ['s'] = false,
+    --   ['ы'] = false,
+    --   ['<leader>'] = {
+    --     ['d'] = 'copy',
+    --     ['в'] = 'copy',
+    --   },
+    --   ['<S-TAB>'] = 'prev_source',
+    -- }
+<
+
+
+TRANS_LIST() ~
+
+Translates each value of the list for all layouts in `use_layouts` option.
+Non-string value is ignored. Translated value will be added to the end.
+
+>lua
+    ---@param dict table Dict-like table
+    ---@return table
+    function M.trans_list(dict)
+<
+
+**Example:**
+
+>lua
+    local keycode_list = { '<leader>d', 'ab', '<S-Tab>' }
+    local translated = utils.trans_list(keycode_list)
+    -- { '<leader>d', 'ab', '<S-Tab>', '<leader>в', 'фи' }
+<
+
+Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
+
+vim:tw=78:ts=8:noet:ft=help:norl:
