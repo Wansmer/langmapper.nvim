@@ -6,17 +6,12 @@ local del = vim.keymap.del
 
 local M = {}
 
----Original function `vim.keymap.set`. Useful when `hack_keymap` is `true`
+---Originals keymap's functions. Useful when `hack_keymap` is `true`
 M.original_set = vim.keymap.set
----Original function `vim.keymap.del`. Useful when `hack_keymap` is `true`
 M.original_del = vim.keymap.del
----Original function `nvim_set_keymap`. Useful when `hack_keymap` is `true`
 M.original_set_keymap = vim.api.nvim_set_keymap
----Original function `nvim_buf_set_keymap`. Useful when `hack_keymap` is `true`
 M.original_buf_set_keymap = vim.api.nvim_buf_set_keymap
----Original function `nvim_set_keymap`. Useful when `hack_keymap` is `true`
 M.original_del_keymap = vim.api.nvim_del_keymap
----Original function `nvim_buf_set_keymap`. Useful when `hack_keymap` is `true`
 M.original_buf_del_keymap = vim.api.nvim_buf_del_keymap
 
 ---Setup langmapper
@@ -68,6 +63,33 @@ function M.map(mode, lhs, rhs, opts)
   map(mode, lhs, rhs, opts)
   -- Translated mapping
   u._map_for_layouts(mode, lhs, rhs, opts, map)
+end
+
+---Wrapper of vim.keymap.set with same contract. (using feedkeys)
+---@param mode string|table Same mode short names as |nvim_set_keymap()|
+---@param lhs string Left-hand side |{lhs}| of the mapping.
+---@param rhs string|function Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
+---@param opts table|nil A table of |:map-arguments|.
+function M.map_feed(mode, lhs, rhs, opts)
+  -- Default mapping
+  map(mode, lhs, rhs, opts)
+  -- Translated mapping
+  for _, lang in ipairs(config.config.use_layouts) do
+    local tr_lhs = M.translate_keycode(lhs, lang)
+
+    if not opts then
+      opts = { desc = M.update_desc(nil, 'feedkeys', lhs) }
+    else
+      opts.desc = M.update_desc(opts.desc, 'feedkeys', lhs)
+    end
+
+    if tr_lhs ~= lhs then
+      map(mode, tr_lhs, function()
+        local term_keycodes = vim.api.nvim_replace_termcodes(lhs, true, true, true)
+        vim.api.nvim_feedkeys(term_keycodes, 'm', true)
+      end, opts)
+    end
+  end
 end
 
 ---Wrapper of vim.keymap.del with same contract

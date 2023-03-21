@@ -10,7 +10,7 @@ M.config = {
   ---E.g., 'v' includes 'x' and 's', but must be listed separate.
   automapping_modes = { 'n', 'v', 'x', 's' },
   ---@type string Standart English layout (on Mac, It may be different in your case.)
-  default_layout = [[~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:"ZXCVBNM<>?`1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./]],
+  default_layout = [[~QWERTYUIOP{}|ASDFGHJKL:"ZXCVBNM<>?`qwertyuiop[]asdfghjkl;'zxcvbnm,./]],
   ---@type string[] Names of layouts. If empty, will handle all configured layouts.
   use_layouts = {},
   ---@type table Fallback layouts
@@ -23,7 +23,8 @@ M.config = {
       ---@type string if you need to specify default layout for this fallback layout
       default_layout = nil,
       ---@type string Fallback layout to translate. Should be same length as default layout
-      layout = [[Ë!"№;%:?*()_+ЙЦУКЕНГШЩЗХЪ/ФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,ё1234567890-=йцукенгшщзхъ\фывапролджэячсмитьбю.]],
+      layout = [[ËЙЦУКЕНГШЩЗХЪ/ФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,ёйцукенгшщзхъфывапролджэячсмитьбю.]],
+      --       [[~QWERTYUIOP{}|ASDFGHJKL:"ZXCVBNM<>?`qwertyuiop[]asdfghjkl;'zxcvbnm,./]]
     },
   },
   os = {
