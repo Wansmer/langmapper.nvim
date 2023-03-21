@@ -33,7 +33,8 @@ A plugin that makes Neovim more friendly to non-English input methods 🤝
 - [Neovim 0.8+](https://github.com/neovim/neovim/releases)
 - CLI utility to determine the current input method _(optional)_
 - Configured [vim.opt.langmap](https://neovim.io/doc/user/options.html#'langmap') for your
-  input method
+  input method;
+- Set up `vim.g.mapleader` and `map.g.localleader` before `langmapper.setup()`;
 
 > Examples of CLI utilities:
 >
@@ -134,13 +135,19 @@ local default_config = {
 
 ### Simple
 
-Set up your `layout` in config, set `hack_keymap` to `true` and load Langmapper the first of the sheet of plugins, then call `langmapper.setup(opts)`.
+Set up your `layout` in config, set `hack_keymap` to `true` and load Langmapper
+the first of the sheet of plugins, then call `langmapper.setup(opts)`.
 
-Under such conditions, all subsequent calls to `vim.keymap.set`, `vim.keymap.del`, `vim.api.nvim_(buf)_set_keymap` and `vim.api.nvim_(buf)_del_keymap` will be wrapped with a special function, which will automatically translate mappings and register them.
+Under such conditions, all subsequent calls to `vim.keymap.set`,
+`vim.keymap.del`, `vim.api.nvim_(buf)_set_keymap` and
+`vim.api.nvim_(buf)_del_keymap` will be wrapped with a special function,
+which will automatically translate mappings and register them.
 
-This means that even in the case of lazy-loading, the mapping setup will still be processed and the translated mapping will be registered for it.
+This means that even in the case of lazy-loading, the mapping setup will
+still be processed and the translated mapping will be registered for it.
 
-If you need to handle built-in and vim script mappings too, call the `langmapper.automapping()` function at the very end of your `init.lua`.
+If you need to handle built-in and vim script mappings too, call the
+`langmapper.automapping()` function at the very end of your `init.lua`.
 
 ### Manualy
 
@@ -170,13 +177,16 @@ local window_mappings = mapper.trans_dict({
 
 #### With automapping
 
-Add `langmapper.autoremap({ global = true, buffer = true })` to the end of your `init.lua`.
+Add `langmapper.autoremap({ global = true, buffer = true })` to the end of your
+`init.lua`.
 
-It will autotranslate all registered mappings from `nvim_get_keymap()` and `nvim_buf_get_keymap()`.
+It will autotranslate all registered mappings from `nvim_get_keymap()` and
+`nvim_buf_get_keymap()`.
 
 But it cannot handle mappings of lazy loaded plugins.
 
-> NOTE: all keys, that you're using in `keys = {}` in `lazy.nvim` also will be translated.
+> NOTE: all keys, that you're using in `keys = {}` in `lazy.nvim` also will be
+> translated.
 
 ## API
 
@@ -192,17 +202,23 @@ langmapper.automapping(...)
 
 ### `automapping()`
 
-Gets the output of `nvim_get_keymap` for all modes listed in the `automapping_modes`, and sets the translated mappings using `nvim_feedkeys`.
+Gets the output of `nvim_get_keymap` for all modes listed in the
+`automapping_modes`, and sets the translated mappings using `nvim_feedkeys`.
 
-Then sets event handlers `{ 'BufWinEnter', 'LspAttach' }` to do the same with outputting `nvim_buf_get_keymap` for each open buffer.
+Then sets event handlers `{ 'BufWinEnter', 'LspAttach' }` to do the same with
+outputting `nvim_buf_get_keymap` for each open buffer.
 
-Must be called at the very end of `init.lua`, after all plugins have been loaded and all key bindings have been set.
+Must be called at the very end of `init.lua`, after all plugins have been loaded
+and all key bindings have been set.
 
 This function also handles mappings made via wim script.
 
-Does not handle mappings for lazy-loaded plugins. To avoid it, see `hack_keymap`.
+Does not handle mappings for lazy-loaded plugins. To avoid it, see
+`hack_keymap`.
 
-> NOTE: If you use `hack_keymap`, there are only one reason to use this function it is auto-handling built-in mappings (e.g., for netrw, like 'gx') and if you have mappings (or plugins with mappings) on vim script.
+> NOTE: If you use `hack_keymap`, there are only one reason to use this function
+> it is auto-handling built-in mappings (e.g., for netrw, like 'gx') and if you
+> have mappings (or plugins with mappings) on vim script.
 
 ```lua
 ---@param opts {global=boolean|nil, buffer=boolean|nil}
@@ -213,13 +229,16 @@ function M.automapping(opts)
 
 Wrappers of `vim.keymap.set` \ `vim.keymap.del` with same contract.
 
-`map()` - Sets the given `lhs`, then translates it to the configured input methods, and maps it with the same options.
+`map()` - Sets the given `lhs`, then translates it to the configured input
+methods, and maps it with the same options.
 
 E.g.:
 
-`map('i', 'jk', '<Esc>')` will execute `vim.keymap.set('i', 'jk', '<Esc>)` and `vim.keymap.set('i', 'ол', <Esc>)`.
+`map('i', 'jk', '<Esc>')` will execute `vim.keymap.set('i', 'jk', '<Esc>)`
+and `vim.keymap.set('i', 'ол', <Esc>)`.
 
-`map('n', '<leader>a', ':echo 123')` will execute `vim.keymap.set('n', '<leader>a', ':echo 123')` and `vim.keymap.set('n', '<leader>ф', ':echo 123')`.
+`map('n', '<leader>a', ':echo 123')` will execute `vim.keymap.set('n', '<leader>a', ':echo 123')`
+and `vim.keymap.set('n', '<leader>ф', ':echo 123')`.
 
 `lhs` with `<Plug>`, `<Sid>` and `<Snr>` will not translate and will be mapped as is.
 
@@ -242,7 +261,8 @@ function M.del(mode, lhs, opts)
 
 ### Other
 
-Original keymap's functions, that were wrap with translates functions if `hack_keymap` is `true`:
+Original keymap's functions, that were wrap with translates functions if
+`hack_keymap` is `true`:
 
 ```lua
 -- When you don't need some mapping to be translated. For example, I don't translate `jk`.
@@ -268,7 +288,8 @@ Another functions-wrappers with translates and same contracts:
 
 ### `translate_keycode()`
 
-Translate 'lhs' to 'lang' layout. If in 'lang' layout not specified `base_layout`, uses global `base_layout`
+Translate 'lhs' to 'lang' layout. If in 'lang' layout not specified
+`base_layout`, uses global `base_layout`
 
 ```lua
 ---@param lhs string Left-hand side |{lhs}| of the mapping.
@@ -287,7 +308,8 @@ local tr_keycode = utils.translate_keycode(keycode, 'ru') -- '<leader>пр'
 
 ### `trans_dict()`
 
-Translates each key of table for all layouts in `use_layouts` option (recursive).
+Translates each key of table for all layouts in `use_layouts` option
+(recursive).
 
 ```lua
 ---@param dict table Dict-like table
