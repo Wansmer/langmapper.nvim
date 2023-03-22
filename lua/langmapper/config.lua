@@ -5,6 +5,9 @@ M.config = {
   map_all_ctrl = true,
   ---@type boolean Wrap all keymap's functions (keymap.set, nvim_set_keymap, etc)
   hack_keymap = true,
+  ---@type string[] Usually you don't want insert mode commands to be translated when hacking.
+  ---This does not affect normal wrapper functions, such as `langmapper.map`
+  disable_hack_modes = { 'i' },
   ---@type table Modes whose mappings will be checked during automapping.
   ---Each mode must be specified, even if some of them extend others.
   ---E.g., 'v' includes 'x' and 's', but must be listed separate.

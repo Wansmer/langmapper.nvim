@@ -35,10 +35,10 @@ function M.setup(opts)
 end
 
 function M._hack_keymap()
-  vim.keymap.set = M.map
+  vim.keymap.set = M._hack_keymap_set
   vim.keymap.del = M.del
-  vim.api.nvim_set_keymap = M.wrap_nvim_set_keymap
-  vim.api.nvim_buf_set_keymap = M.wrap_nvim_buf_set_keymap
+  vim.api.nvim_set_keymap = M._hack_nvim_set_keymap
+  vim.api.nvim_buf_set_keymap = M._hack_nvim_buf_set_keymap
   vim.api.nvim_del_keymap = M.wrap_nvim_del_keymap
   vim.api.nvim_buf_del_keymap = M.wrap_nvim_buf_del_keymap
 end
@@ -63,33 +63,6 @@ function M.map(mode, lhs, rhs, opts)
   map(mode, lhs, rhs, opts)
   -- Translated mapping
   u._map_for_layouts(mode, lhs, rhs, opts, map)
-end
-
----Wrapper of vim.keymap.set with same contract. (using feedkeys)
----@param mode string|table Same mode short names as |nvim_set_keymap()|
----@param lhs string Left-hand side |{lhs}| of the mapping.
----@param rhs string|function Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
----@param opts table|nil A table of |:map-arguments|.
-function M.map_feed(mode, lhs, rhs, opts)
-  -- Default mapping
-  map(mode, lhs, rhs, opts)
-  -- Translated mapping
-  for _, lang in ipairs(config.config.use_layouts) do
-    local tr_lhs = M.translate_keycode(lhs, lang)
-
-    if not opts then
-      opts = { desc = M.update_desc(nil, 'feedkeys', lhs) }
-    else
-      opts.desc = M.update_desc(opts.desc, 'feedkeys', lhs)
-    end
-
-    if tr_lhs ~= lhs then
-      map(mode, tr_lhs, function()
-        local term_keycodes = vim.api.nvim_replace_termcodes(lhs, true, true, true)
-        vim.api.nvim_feedkeys(term_keycodes, 'm', true)
-      end, opts)
-    end
-  end
 end
 
 ---Wrapper of vim.keymap.del with same contract
@@ -193,6 +166,68 @@ function M.automapping(opts)
   end
   if opts.buffer then
     u._autoremap_buffer()
+  end
+end
+
+-- [[ Wrappers for `hack_keymap` ]]
+-- NOTE: Must be separate functions because allowance for prohibited modes is used,
+-- unlike regular wrappers (`disable_hack_modes`)
+
+---Wrapper of vim.keymap.set with same contract (for `hack_keymap`)
+---Not translated modes from `disable_hack_modes`
+---@param mode string|table Same mode short names as |nvim_set_keymap()|
+---@param lhs string Left-hand side |{lhs}| of the mapping.
+---@param rhs string|function Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
+---@param opts table|nil A table of |:map-arguments|.
+function M._hack_keymap_set(mode, lhs, rhs, opts)
+  -- Default mapping
+  map(mode, lhs, rhs, opts)
+
+  -- Skip disabled modes
+  if type(mode) == 'string' then
+    mode = { mode }
+  end
+
+  mode = u._skip_disabled_modes(mode)
+  -- Translated mapping
+  u._map_for_layouts(mode, lhs, rhs, opts, map)
+end
+
+---Wrapper of `nvim_set_keymap` with same contract. See `:h nvim_set_keymap()`
+---(for `hack_keymap`) Not translated modes from `disable_hack_modes`
+---@param mode string Mode short-name
+---@param lhs string Left-hand-side |{lhs}| of the mapping.
+---@param rhs string  Right-hand-side |{rhs}| of the mapping.
+---@param opts? table Optional parameters map
+function M._hack_nvim_set_keymap(mode, lhs, rhs, opts)
+  opts = opts or {}
+  -- Default mapping
+  M.original_set_keymap(mode, lhs, rhs, opts)
+
+  -- Skip disabled modes
+  if not vim.tbl_contains(config.config.disable_hack_modes, mode) then
+    -- Translated mapping
+    u._map_for_layouts(mode, lhs, rhs, opts, M.original_set_keymap)
+  end
+end
+
+---Wrapper of `nvim_buf_set_keymap` with same contract. See `:h nvim_buf_set_keymap()`
+---Sets a buffer-local |mapping| for the given mode.
+---(for `hack_keymap`) Not translated modes from `disable_hack_modes`
+---@param buffer integer Buffer handle, or 0 for current buffer
+---@param mode string Mode short-name
+---@param lhs string Left-hand-side |{lhs}| of the mapping.
+---@param rhs string  Right-hand-side |{rhs}| of the mapping.
+---@param opts? table Optional parameters map
+function M._hack_nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts)
+  opts = opts or {}
+  -- Default mapping
+  M.original_buf_set_keymap(buffer, mode, lhs, rhs, opts)
+
+  -- Skip disabled modes
+  if not vim.tbl_contains(config.config.disable_hack_modes, mode) then
+    -- Translated mapping
+    u._map_for_layouts(mode, lhs, rhs, opts, u._bind(M.original_buf_set_keymap, buffer))
   end
 end
 
