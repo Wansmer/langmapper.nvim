@@ -452,8 +452,22 @@ function M._bind(cb, first)
   end
 end
 
+function M._skip_disabled_modes(modes)
+  local allowed_modes = {}
+  for _, mode in ipairs(modes) do
+    if not vim.tbl_contains(c.config.disable_hack_modes, mode) then
+      table.insert(allowed_modes, mode)
+    end
+  end
+  return allowed_modes
+end
+
 -- Translate mapping for each langs in config.use_layouts
 function M._map_for_layouts(mode, lhs, rhs, opts, map_cb)
+  if type(mode) == 'table' and vim.tbl_isempty(mode) then
+    return
+  end
+
   for _, lang in ipairs(c.config.use_layouts) do
     local tr_lhs = M.translate_keycode(lhs, lang)
 
