@@ -13,6 +13,7 @@ A plugin that makes Neovim more friendly to non-English input methods 🤝
 - [Usage](#usage)
   - [Simple](#simple)
   - [Manualy](#manualy)
+  - [Using with `folke/which-key.nvim`](#using-with-folkewhich-keynvim)
 - [API](#api)
 - [Utils](#utils)
 <!--toc:end-->
@@ -85,6 +86,9 @@ mappings. All other movement commands depend on the `langmap`.
 <summary>Show default config</summary>
 
 ```lua
+-- Langmap example for RussianWin input method on MacOS
+vim.opt.langmap = [[ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЯЧСМИТЬБЮ;QWERTYUIOP{}ASDFGHJKL:ZXCVBNM<>,йцукенгшщзхъфывапролджячсмитьбю;qwertyuiop[]asdfghjkl\;zxcvbnm\,\.]],
+
 local default_config = {
   ---@type boolean Add mapping for every CTRL+ binding or not.
   map_all_ctrl = true,
@@ -190,6 +194,65 @@ But it cannot handle mappings of lazy loaded plugins.
 
 > NOTE: all keys, that you're using in `keys = {}` in `lazy.nvim` also will be
 > translated.
+
+### Using with `folke/which-key.nvim`
+
+`which-key` uses `nvim_feedkeys` to execute the sequence entered by the user.
+This imposes restrictions on the execution of commands related to operators,
+text objects and movements, since `nvim_feedkeys` does not handle the value
+of your `vim.opt.langmap`. Therefore, the entered sequence must be
+translated back into English characters.
+
+[Here](https://github.com/Wansmer/LazyWithLangmapper) example how to integrate
+Langmapper to LazyNvim.
+
+<details>
+
+<summary>Configuration example:</summary>
+
+```lua
+return {
+  'folke/which-key.nvim',
+  enabled = true,
+  dependencies = { 'Wansmer/langmapper.nvim' },
+  config = function()
+    vim.o.timeout = true
+    vim.o.timeoutlen = 300
+
+    local view = require('which-key.view')
+    local execute = view.execute
+
+    -- wrap `execute()` and translate sequence back
+    view.execute = function(prefix_i, mode, buf)
+      local lang = 'ru'
+      local lmc = require('langmapper.config').config
+      local en = lmc.layouts[lang].default_layout or lmc.default_layout
+      local ru = lmc.layouts[lang].layout
+      prefix_i = vim.fn.tr(prefix_i, ru, en)
+      execute(prefix_i, mode, buf)
+    end
+
+    -- If you want to see translated operators, text objects and motions in
+    -- which-key prompt
+    local lmu = require('langmapper.utils')
+    local presets = require('which-key.plugins.presets')
+    presets.operators = lmu.trans_dict(presets.operators)
+    presets.objects = lmu.trans_dict(presets.objects)
+    presets.motions = lmu.trans_dict(presets.motions)
+
+    require('which-key').setup({
+      ignore_missing = true, -- Recommended for hide all ctrl sequences
+    })
+  end,
+}
+```
+
+</details>
+
+> Note: because translated characters are not always single-byte, like English
+> characters, the sequence is difficult to break into individual characters and
+> process completely correctly, so in rare cases it may not work as expected. In
+> most cases, everything works correctly.
 
 ## API
 
