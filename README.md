@@ -111,14 +111,16 @@ vim.opt.langmap = vim.fn.join({ escape(ru_shift) .. ';' .. escape(en_shift), esc
 local default_config = {
   ---@type boolean Add mapping for every CTRL+ binding or not.
   map_all_ctrl = true,
-  ---@type boolean Wrap all keymap's functions (keymap.set, nvim_set_keymap, etc)
+  ---@type string[] Modes to `map_all_ctrl`
+  ---Here and below each mode must be specified, even if some of them extend others.
+  ---E.g., 'v' includes 'x' and 's', but must be listed separate.
+  ctrl_map_modes = { 'n', 'x', 's', 'o', 'i', 'c', 't', 'v' },
+  ---@type boolean Wrap all keymap's functions (nvim_set_keymap etc)
   hack_keymap = true,
   ---@type string[] Usually you don't want insert mode commands to be translated when hacking.
   ---This does not affect normal wrapper functions, such as `langmapper.map`
   disable_hack_modes = { 'i' },
   ---@type table Modes whose mappings will be checked during automapping.
-  ---Each mode must be specified, even if some of them extend others.
-  ---E.g., 'v' includes 'x' and 's', but must be listed separate.
   automapping_modes = { 'n', 'v', 'x', 's' },
   ---@type string Standart English layout (on Mac, It may be different in your case.)
   default_layout = [[ABCDEFGHIJKLMNOPQRSTUVWXYZ<>:"{}~abcdefghijklmnopqrstuvwxyz,.;'[]`]],
@@ -173,11 +175,13 @@ This means that even in the case of lazy-loading, the mapping setup will
 still be processed and the translated mapping will be registered for it.
 
 If you need to handle built-in and vim script mappings too, call the
-`langmapper.automapping()` function at the very end of your `init.lua`.
+`langmapper.automapping({ buffer = false })` function at the very end of
+your `init.lua`. (buffer to `false`, because `nvim_buf_set_keymap` already hacked 😎)
 
 ### Manualy
 
-Set up your `layout` in config, and call `langmapper.setup(opts)`.
+Set up your `layout` in config, set `hack_keymap` to false,
+and call `langmapper.setup(opts)`.
 
 #### For regular mapping:
 
@@ -252,7 +256,6 @@ return {
     -- If you want to see translated operators, text objects and motions in
     -- which-key prompt
     -- local presets = require('which-key.plugins.presets')
-    -- local misc = require('which-key.plugins.presets.misc')
     -- presets.operators = lmu.trans_dict(presets.operators)
     -- presets.objects = lmu.trans_dict(presets.objects)
     -- presets.motions = lmu.trans_dict(presets.motions)
@@ -343,14 +346,14 @@ Original keymap's functions, that were wrap with translates functions if
 
 ```lua
 -- When you don't need some mapping to be translated. For example, I don't translate `jk`.
-`original_set()` -- vim.keymap.set
-`original_del()` -- vim.keymap.del
 `original_set_keymap()` -- vim.api.nvim_set_keymap
 `original_buf_set_keymap() -- vim.api.nvim_buf_set_keymap
 `original_del_keymap()` -- vim.api.nvim_del_keymap
 `original_buf_del_keymap()` -- vim.api.nvim_buf_del_keymap
 `put_back_keymap()` -- Set original functions back
 ```
+
+> NOTE: No original `vim.keymap.set/del` because `nvim_set/del_keymap` is used inside
 
 Another functions-wrappers with translates and same contracts:
 
@@ -365,8 +368,10 @@ Another functions-wrappers with translates and same contracts:
 
 ### `translate_keycode()`
 
-Translate 'lhs' to 'lang' layout. If in 'lang' layout not specified
-`base_layout`, uses global `base_layout`
+Translate 'lhs' to 'to_lang' layout. If in 'to_lang' layout no specified
+`base_layout`, uses global `base_layout` To translate back to English
+characters, set 'to_lang' to `default` and pass the name of the layout to
+translate from as the third parameter.
 
 ```lua
 ---@param lhs string Left-hand side |{lhs}| of the mapping.

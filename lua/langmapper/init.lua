@@ -7,12 +7,12 @@ local del = vim.keymap.del
 local M = {}
 
 ---Originals keymap's functions. Useful when `hack_keymap` is `true`
-M.original_set = vim.keymap.set
-M.original_del = vim.keymap.del
-M.original_set_keymap = vim.api.nvim_set_keymap
-M.original_buf_set_keymap = vim.api.nvim_buf_set_keymap
-M.original_del_keymap = vim.api.nvim_del_keymap
-M.original_buf_del_keymap = vim.api.nvim_buf_del_keymap
+M.original_set = config.original_keymaps.set
+M.original_del = config.original_keymaps.del
+M.original_set_keymap = config.original_keymaps.nvim_set_keymap
+M.original_buf_set_keymap = config.original_keymaps.nvim_buf_set_keymap
+M.original_del_keymap = config.original_keymaps.nvim_del_keymap
+M.original_buf_del_keymap = config.original_keymaps.nvim_buf_del_keymap
 
 ---Setup langmapper
 ---@param opts? table
@@ -35,8 +35,7 @@ function M.setup(opts)
 end
 
 function M._hack_keymap()
-  vim.keymap.set = M._hack_keymap_set
-  vim.keymap.del = M.del
+  -- No need to hack `vim.keymap.set/del` because `nvim_(buf)_set/del_keymap` is used inside
   vim.api.nvim_set_keymap = M._hack_nvim_set_keymap
   vim.api.nvim_buf_set_keymap = M._hack_nvim_buf_set_keymap
   vim.api.nvim_del_keymap = M.wrap_nvim_del_keymap
@@ -60,7 +59,7 @@ end
 ---@param opts table|nil A table of |:map-arguments|.
 function M.map(mode, lhs, rhs, opts)
   -- Default mapping
-  map(mode, lhs, rhs, opts)
+  M.original_set(mode, lhs, rhs, opts)
   -- Translated mapping
   u._map_for_layouts(mode, lhs, rhs, opts, map)
 end
@@ -73,7 +72,7 @@ end
 ---  When "true" or 0, use the current buffer.
 function M.del(mode, lhs, opts)
   -- Default mapping
-  del(mode, lhs, opts)
+  M.original_del(mode, lhs, opts)
 
   mode = type(mode) == 'table' and mode or { mode }
 
@@ -160,7 +159,7 @@ end
 ---Does not handle mappings for lazy-loaded plugins. To avoid it, see `hack_keymap`.
 ---@param opts table? {global=boolean|nil, buffer=boolean|nil} Both true by default
 function M.automapping(opts)
-  opts = vim.tbl_extend('force', opts or {}, { buffer = true, global = true })
+  opts = vim.tbl_extend('force', { buffer = true, global = true }, opts or {})
   if opts.global then
     u._autoremap_global()
   end
@@ -172,26 +171,6 @@ end
 -- [[ Wrappers for `hack_keymap` ]]
 -- NOTE: Must be separate functions because allowance for prohibited modes is used,
 -- unlike regular wrappers (`disable_hack_modes`)
-
----Wrapper of vim.keymap.set with same contract (for `hack_keymap`)
----Not translated modes from `disable_hack_modes`
----@param mode string|table Same mode short names as |nvim_set_keymap()|
----@param lhs string Left-hand side |{lhs}| of the mapping.
----@param rhs string|function Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
----@param opts table|nil A table of |:map-arguments|.
-function M._hack_keymap_set(mode, lhs, rhs, opts)
-  -- Default mapping
-  map(mode, lhs, rhs, opts)
-
-  -- Skip disabled modes
-  if type(mode) == 'string' then
-    mode = { mode }
-  end
-
-  mode = u._skip_disabled_modes(mode)
-  -- Translated mapping
-  u._map_for_layouts(mode, lhs, rhs, opts, map)
-end
 
 ---Wrapper of `nvim_set_keymap` with same contract. See `:h nvim_set_keymap()`
 ---(for `hack_keymap`) Not translated modes from `disable_hack_modes`

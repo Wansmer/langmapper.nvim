@@ -3,14 +3,16 @@ local M = {}
 M.config = {
   ---@type boolean Add mapping for every CTRL+ binding or not.
   map_all_ctrl = true,
-  ---@type boolean Wrap all keymap's functions (keymap.set, nvim_set_keymap, etc)
+  ---@type string[] Modes to `map_all_ctrl`
+  ---Here and below each mode must be specified, even if some of them extend others.
+  ---E.g., 'v' includes 'x' and 's', but must be listed separate.
+  ctrl_map_modes = { 'n', 'o', 'i', 'c', 't', 'v' },
+  ---@type boolean Wrap all keymap's functions (nvim_set_keymap etc)
   hack_keymap = true,
   ---@type string[] Usually you don't want insert mode commands to be translated when hacking.
   ---This does not affect normal wrapper functions, such as `langmapper.map`
   disable_hack_modes = { 'i' },
   ---@type table Modes whose mappings will be checked during automapping.
-  ---Each mode must be specified, even if some of them extend others.
-  ---E.g., 'v' includes 'x' and 's', but must be listed separate.
   automapping_modes = { 'n', 'v', 'x', 's' },
   ---@type string Standart English layout (on Mac, It may be different in your case.)
   default_layout = [[~QWERTYUIOP{}|ASDFGHJKL:"ZXCVBNM<>?`qwertyuiop[]asdfghjkl;'zxcvbnm,./]],
@@ -94,5 +96,14 @@ function M.update_config(opts)
   check_layouts()
   check_deprecated(opts)
 end
+
+M.original_keymaps = {
+  set = vim.keymap.set,
+  del = vim.keymap.del,
+  nvim_set_keymap = vim.api.nvim_set_keymap,
+  nvim_buf_set_keymap = vim.api.nvim_buf_set_keymap,
+  nvim_del_keymap = vim.api.nvim_del_keymap,
+  nvim_buf_del_keymap = vim.api.nvim_buf_del_keymap,
+}
 
 return M

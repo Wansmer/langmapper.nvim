@@ -262,12 +262,12 @@ function M.trans_list(list)
   return trans_list
 end
 
----Remapping each CTRL sequence
+---Remapping each CTRL+ sequence
 function M._ctrls_remap()
   local function remap_ctrl(list, from, to)
     for _, char in ipairs(vim.fn.uniq(list)) do
       -- No use short values of modes like ' ', '!', 'l'
-      local modes = { 'n', 'x', 's', 'o', 'i', 'c', 't', 'v' }
+      local modes = c.config.ctrl_map_modes or { 'n', 'o', 'i', 'c', 't', 'v' }
       local keycode = '<C-' .. char .. '>'
 
       local tr_char = vim.fn.tr(char, from, to)
@@ -295,18 +295,6 @@ function M._ctrls_remap()
   end
 end
 
----Checking if rhs was remapped. Return mode for feedkeys()
----If rhs was remapped by langmapper, use default nvim behavior (mode n)
----@param rhs string
----@return string
-local function get_feedkeys_mode(rhs)
-  local arg = vim.fn.maparg(rhs, 'n')
-  if arg == '' or arg:match('langmapper') then
-    return 'n'
-  end
-  return 'm'
-end
-
 function M._expand_langmap()
   local os = vim.loop.os_uname().sysname
   local get_layout_id = c.config.os[os] and c.config.os[os].get_current_layout_id
@@ -328,9 +316,9 @@ function M._expand_langmap()
     local map = c.config.layouts[lang].layout
     local base_list = vim.split(base, '', { plain = true })
     local feed = function(keys)
-      local mode = get_feedkeys_mode(keys)
       keys = vim.api.nvim_replace_termcodes(keys, true, true, true)
-      vim.api.nvim_feedkeys(keys, mode, true)
+      -- Mode always should be noremap to avoid recursion
+      vim.api.nvim_feedkeys(keys, 'n', true)
     end
 
     for i = 1, #base do
@@ -421,7 +409,7 @@ local function has_map(lhs, map, mappings)
   end)
 end
 
-local function autoremap(scope)
+local function automapping(scope)
   local modes = c.config.automapping_modes or { 'n', 'v', 'x', 's' }
   local bufnr = scope == 'buffer' and vim.api.nvim_get_current_buf() or nil
   local mappings = {}
@@ -475,7 +463,7 @@ end
 
 ---Adds translated mappings for global
 function M._autoremap_global()
-  autoremap('global')
+  automapping('global')
 end
 
 ---Adds translated mappings for buffer
@@ -484,7 +472,7 @@ function M._autoremap_buffer()
     callback = function(data)
       vim.schedule(function()
         if vim.api.nvim_buf_is_loaded(data.buf) then
-          autoremap('buffer')
+          automapping('buffer')
         end
       end)
     end,
