@@ -177,7 +177,8 @@ If you need to handle built-in and vim script mappings too, call the
 
 ### Manualy
 
-Set up your `layout` in config, and call `langmapper.setup(opts)`.
+Set up your `layout` in config, set `hack_keymap` to false,
+and call `langmapper.setup(opts)`.
 
 #### For regular mapping:
 
@@ -252,7 +253,6 @@ return {
     -- If you want to see translated operators, text objects and motions in
     -- which-key prompt
     -- local presets = require('which-key.plugins.presets')
-    -- local misc = require('which-key.plugins.presets.misc')
     -- presets.operators = lmu.trans_dict(presets.operators)
     -- presets.objects = lmu.trans_dict(presets.objects)
     -- presets.motions = lmu.trans_dict(presets.motions)
@@ -365,8 +365,10 @@ Another functions-wrappers with translates and same contracts:
 
 ### `translate_keycode()`
 
-Translate 'lhs' to 'lang' layout. If in 'lang' layout not specified
-`base_layout`, uses global `base_layout`
+Translate 'lhs' to 'to_lang' layout. If in 'to_lang' layout no specified
+`base_layout`, uses global `base_layout` To translate back to English
+characters, set 'to_lang' to `default` and pass the name of the layout to
+translate from as the third parameter.
 
 ```lua
 ---@param lhs string Left-hand side |{lhs}| of the mapping.

@@ -95,4 +95,13 @@ function M.update_config(opts)
   check_deprecated(opts)
 end
 
+M.original_keymaps = {
+  set = vim.keymap.set,
+  del = vim.keymap.del,
+  nvim_set_keymap = vim.api.nvim_set_keymap,
+  nvim_buf_set_keymap = vim.api.nvim_buf_set_keymap,
+  nvim_del_keymap = vim.api.nvim_del_keymap,
+  nvim_buf_del_keymap = vim.api.nvim_buf_del_keymap,
+}
+
 return M

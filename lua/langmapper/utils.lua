@@ -409,7 +409,7 @@ local function has_map(lhs, map, mappings)
   end)
 end
 
-local function autoremap(scope)
+local function automapping(scope)
   local modes = c.config.automapping_modes or { 'n', 'v', 'x', 's' }
   local bufnr = scope == 'buffer' and vim.api.nvim_get_current_buf() or nil
   local mappings = {}
@@ -463,7 +463,7 @@ end
 
 ---Adds translated mappings for global
 function M._autoremap_global()
-  autoremap('global')
+  automapping('global')
 end
 
 ---Adds translated mappings for buffer
@@ -472,7 +472,7 @@ function M._autoremap_buffer()
     callback = function(data)
       vim.schedule(function()
         if vim.api.nvim_buf_is_loaded(data.buf) then
-          autoremap('buffer')
+          automapping('buffer')
         end
       end)
     end,
