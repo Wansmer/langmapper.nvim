@@ -24,6 +24,15 @@ local transcode_ru = {
   ['<snr>(do_something)'] = '<snr>(do_something)',
 }
 
+local transcode_en = {}
+
+for key, val in pairs(transcode_ru) do
+  -- Because not get back <localleader> and uppercase letter in CTRL
+  if not key:match('<local') and not key:match('<C%-L>') then
+    transcode_en[val] = key
+  end
+end
+
 describe('Langmapper: utils', function()
   require('langmapper').setup()
   local utils = require('langmapper.utils')
@@ -31,6 +40,12 @@ describe('Langmapper: utils', function()
   for from, to in pairs(transcode_ru) do
     it(('`translate_keycode()`: Should transcode from "%s" to "%s"'):format(from, to), function()
       assert.equals(to, utils.translate_keycode(from, 'ru'))
+    end)
+  end
+
+  for from, to in pairs(transcode_en) do
+    it(('`translate_keycode()`: Should transcode back from "%s" to "%s"'):format(from, to), function()
+      assert.equals(to, utils.translate_keycode(from, 'default', 'ru'))
     end)
   end
 

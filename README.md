@@ -219,40 +219,32 @@ return {
     vim.o.timeout = true
     vim.o.timeoutlen = 300
 
+    local lmu = require('langmapper.utils')
     local view = require('which-key.view')
     local execute = view.execute
 
     -- wrap `execute()` and translate sequence back
     view.execute = function(prefix_i, mode, buf)
-      local lang = 'ru'
-      local lmc = require('langmapper.config').config
-      local en = lmc.layouts[lang].default_layout or lmc.default_layout
-      local ru = lmc.layouts[lang].layout
-      prefix_i = vim.fn.tr(prefix_i, ru, en)
+      -- Translate back to English characters
+      prefix_i = lmu.translate_keycode(prefix_i, 'default', 'ru')
       execute(prefix_i, mode, buf)
     end
 
     -- If you want to see translated operators, text objects and motions in
     -- which-key prompt
-    local lmu = require('langmapper.utils')
-    local presets = require('which-key.plugins.presets')
-    presets.operators = lmu.trans_dict(presets.operators)
-    presets.objects = lmu.trans_dict(presets.objects)
-    presets.motions = lmu.trans_dict(presets.motions)
+    -- local presets = require('which-key.plugins.presets')
+    -- local misc = require('which-key.plugins.presets.misc')
+    -- presets.operators = lmu.trans_dict(presets.operators)
+    -- presets.objects = lmu.trans_dict(presets.objects)
+    -- presets.motions = lmu.trans_dict(presets.motions)
+    -- etc
 
-    require('which-key').setup({
-      ignore_missing = true, -- Recommended for hide all ctrl sequences
-    })
+    require('which-key').setup()
   end,
 }
 ```
 
 </details>
-
-> Note: because translated characters are not always single-byte, like English
-> characters, the sequence is difficult to break into individual characters and
-> process completely correctly, so in rare cases it may not work as expected. In
-> most cases, everything works correctly.
 
 ## API
 

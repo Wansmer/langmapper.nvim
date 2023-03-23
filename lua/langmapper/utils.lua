@@ -104,18 +104,58 @@ local function get_keycode_ranges(key_seq)
   return ranges
 end
 
----Translate 'lhs' to 'lang' layout. If in 'lang' layout no specified `base_layout`, uses global `base_layout`
+function M.split_multibyte(str)
+  -- From: https://neovim.discourse.group/t/how-do-you-work-with-strings-with-multibyte-characters-in-lua/2437/4
+  local function char_byte_count(str, i)
+    local char = string.byte(str, i or 1)
+
+    -- Get byte count of unicode character (RFC 3629)
+    if char > 0 and char <= 127 then
+      return 1
+    elseif char >= 194 and char <= 223 then
+      return 2
+    elseif char >= 224 and char <= 239 then
+      return 3
+    elseif char >= 240 and char <= 244 then
+      return 4
+    end
+  end
+
+  local symbols = {}
+  for i = 1, vim.fn.strlen(str), 1 do
+    local len = char_byte_count(str, i)
+    if len then
+      table.insert(symbols, str:sub(i, i + len - 1))
+    end
+  end
+
+  return symbols
+end
+
+---Translate 'lhs' to 'to_lang' layout. If in 'to_lang' layout no specified `base_layout`, uses global `base_layout`
+---To translate back to English characters, set 'to_lang' to `default` and pass the name
+---of the layout to translate from as the third parameter.
 ---@param lhs string Left-hand side |{lhs}| of the mapping.
----@param lang string Name of preset for layout
+---@param to_lang string Name of layout or 'default' if need translating back to English layout
+---@param from_lang? string Name of layout.
 ---@return string
-function M.translate_keycode(lhs, lang)
+function M.translate_keycode(lhs, to_lang, from_lang)
   if M.lhs_forbidden(lhs) then
     return lhs
   end
 
-  local base_layout = c.config.layouts[lang].default_layout or c.config.default_layout
-  local layout = c.config.layouts[lang].layout
-  local seq = vim.split(lhs, '', { plain = true })
+  from_lang = from_lang or 'default'
+  local base_layout, layout
+  if to_lang == 'default' then
+    layout = c.config.layouts[from_lang].default_layout or c.config.default_layout
+    base_layout = c.config.layouts[from_lang].layout
+  else
+    base_layout = c.config.layouts[to_lang].default_layout or c.config.default_layout
+    layout = c.config.layouts[to_lang].layout
+  end
+
+  -- local seq = vim.split(lhs, '', { plain = true })
+  local seq = M.split_multibyte(lhs)
   local keycode_ranges = get_keycode_ranges(seq)
   local trans_seq = {}
   local in_keycode = false
@@ -232,7 +272,7 @@ function M._ctrls_remap()
 
       local tr_char = vim.fn.tr(char, from, to)
       local tr_keycode = '<C-' .. tr_char .. '>'
-      local desc = M.update_desc(keycode, 'feedkeys', tr_keycode)
+      local desc = M.update_desc(nil, 'feedkeys', keycode)
       -- Prevent recursion
       if not from:find(tr_char, 1, true) then
         local term_keycodes = vim.api.nvim_replace_termcodes(keycode, true, true, true)
@@ -271,10 +311,14 @@ function M._expand_langmap()
   local os = vim.loop.os_uname().sysname
   local get_layout_id = c.config.os[os] and c.config.os[os].get_current_layout_id
   local can_check_layout = get_layout_id and type(get_layout_id) == 'function'
-  local lm = vim.opt.langmap:get()
 
+  -- If `langmap` contains an escaped comma, `langmap:get()` returns not correct list.
+  -- That's why split it manually.
+  local rg = '[^\\\\]\\zs,\\ze'
+  local lm = vim.fn.join(vim.opt.langmap:get(), ',')
+  local lm_list = vim.split(vim.fn.substitute(lm, rg, '!!!', 'g'), '!!!')
   local function in_langmap(char, tr_char)
-    return M.some(lm, function(map)
+    return M.some(lm_list, function(map)
       return map:find(char, 1, true) and map:find(tr_char, 1, true)
     end)
   end
