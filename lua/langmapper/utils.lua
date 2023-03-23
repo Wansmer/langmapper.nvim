@@ -295,18 +295,6 @@ function M._ctrls_remap()
   end
 end
 
----Checking if rhs was remapped. Return mode for feedkeys()
----If rhs was remapped by langmapper, use default nvim behavior (mode n)
----@param rhs string
----@return string
-local function get_feedkeys_mode(rhs)
-  local arg = vim.fn.maparg(rhs, 'n')
-  if arg == '' or arg:match('langmapper') then
-    return 'n'
-  end
-  return 'm'
-end
-
 function M._expand_langmap()
   local os = vim.loop.os_uname().sysname
   local get_layout_id = c.config.os[os] and c.config.os[os].get_current_layout_id
@@ -328,9 +316,9 @@ function M._expand_langmap()
     local map = c.config.layouts[lang].layout
     local base_list = vim.split(base, '', { plain = true })
     local feed = function(keys)
-      local mode = get_feedkeys_mode(keys)
       keys = vim.api.nvim_replace_termcodes(keys, true, true, true)
-      vim.api.nvim_feedkeys(keys, mode, true)
+      -- Mode always should be noremap to avoid recursion
+      vim.api.nvim_feedkeys(keys, 'n', true)
     end
 
     for i = 1, #base do
