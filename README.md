@@ -173,7 +173,8 @@ This means that even in the case of lazy-loading, the mapping setup will
 still be processed and the translated mapping will be registered for it.
 
 If you need to handle built-in and vim script mappings too, call the
-`langmapper.automapping()` function at the very end of your `init.lua`.
+`langmapper.automapping({ buffer = false })` function at the very end of
+your `init.lua`. (buffer to `false`, because `nvim_buf_set_keymap` already hacked 😎)
 
 ### Manualy
 
@@ -343,14 +344,14 @@ Original keymap's functions, that were wrap with translates functions if
 
 ```lua
 -- When you don't need some mapping to be translated. For example, I don't translate `jk`.
-`original_set()` -- vim.keymap.set
-`original_del()` -- vim.keymap.del
 `original_set_keymap()` -- vim.api.nvim_set_keymap
 `original_buf_set_keymap() -- vim.api.nvim_buf_set_keymap
 `original_del_keymap()` -- vim.api.nvim_del_keymap
 `original_buf_del_keymap()` -- vim.api.nvim_buf_del_keymap
 `put_back_keymap()` -- Set original functions back
 ```
+
+> NOTE: No original `vim.keymap.set/del` because `nvim_set/del_keymap` is used inside
 
 Another functions-wrappers with translates and same contracts:
 
