@@ -375,15 +375,16 @@ UTILS                                            *langmapper-langmapper-utils*
 TRANSLATE_KEYCODE() ~
 
 Translate 'lhs' to 'to_lang' layout. If in 'to_lang' layout no specified
-`base_layout`, uses global `base_layout` To translate back to English
+`default_layout`, uses global `default_layout` To translate back to English
 characters, set 'to_lang' to `default` and pass the name of the layout to
 translate from as the third parameter.
 
 >lua
     ---@param lhs string Left-hand side |{lhs}| of the mapping.
-    ---@param lang string Name of preset for layout
+    ---@param to_lang string Name of layout or 'default' if need translating back to English layout
+    ---@param from_lang? string Name of layout.
     ---@return string
-    function M.translate_keycode(lhs, lang)
+    function M.translate_keycode(lhs, to_lang, from_lang)
 <
 
 **Example:**
