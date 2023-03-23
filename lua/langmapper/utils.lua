@@ -262,12 +262,12 @@ function M.trans_list(list)
   return trans_list
 end
 
----Remapping each CTRL sequence
+---Remapping each CTRL+ sequence
 function M._ctrls_remap()
   local function remap_ctrl(list, from, to)
     for _, char in ipairs(vim.fn.uniq(list)) do
       -- No use short values of modes like ' ', '!', 'l'
-      local modes = c.config.ctrl_map_modes or { 'n', 'x', 's', 'o', 'i', 'c', 't', 'v' }
+      local modes = c.config.ctrl_map_modes or { 'n', 'o', 'i', 'c', 't', 'v' }
       local keycode = '<C-' .. char .. '>'
 
       local tr_char = vim.fn.tr(char, from, to)
