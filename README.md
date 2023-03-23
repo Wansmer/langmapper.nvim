@@ -83,12 +83,31 @@ mappings. All other movement commands depend on the `langmap`.
 
 <details>
 
+<summary>Show example of `vim.opt.langmap`</summary>
+
+```lua
+local function escape(str)
+  -- You need to escape these characters to work correctly
+  local escape_chars = [[;,."|\]]
+  return vim.fn.escape(str, escape_chars)
+end
+
+-- Recommended to use lua template string
+local en = [[qwertyuiop[]asdfghjkl;zxcvbnm,.]]
+local ru = [[йцукенгшщзхъфывапролджячсмитьбю]]
+local en_shift = [[QWERTYUIOP{}ASDFGHJKL:ZXCVBNM<>]]
+local ru_shift = [[ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЯЧСМИТЬБЮ]]
+--                              | `to` should be first     | `from` should be second
+vim.opt.langmap = vim.fn.join({ escape(ru_shift) .. ';' .. escape(en_shift), escape(ru) .. ';' .. escape(en) }, ',')
+```
+
+</details>
+
+<details>
+
 <summary>Show default config</summary>
 
 ```lua
--- Langmap example for RussianWin input method on MacOS
-vim.opt.langmap = [[ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЯЧСМИТЬБЮ;QWERTYUIOP{}ASDFGHJKL:ZXCVBNM<>,йцукенгшщзхъфывапролджячсмитьбю;qwertyuiop[]asdfghjkl\;zxcvbnm\,\.]],
-
 local default_config = {
   ---@type boolean Add mapping for every CTRL+ binding or not.
   map_all_ctrl = true,
