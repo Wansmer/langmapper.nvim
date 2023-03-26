@@ -28,7 +28,7 @@ function M.setup(opts)
   u._set_variant_commands()
 
   if config.config.map_all_ctrl then
-    u._ctrls_remap()
+    u._map_translated_ctrls()
   end
 
   if config.config.hack_keymap then

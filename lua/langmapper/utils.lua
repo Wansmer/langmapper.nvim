@@ -42,34 +42,6 @@ local function get_keycode_ranges(key_seq)
   return ranges
 end
 
-function M.split_multibyte(str)
-  -- From: https://neovim.discourse.group/t/how-do-you-work-with-strings-with-multibyte-characters-in-lua/2437/4
-  local function char_byte_count(s, i)
-    local char = string.byte(s, i or 1)
-
-    -- Get byte count of unicode character (RFC 3629)
-    if char > 0 and char <= 127 then
-      return 1
-    elseif char >= 194 and char <= 223 then
-      return 2
-    elseif char >= 224 and char <= 239 then
-      return 3
-    elseif char >= 240 and char <= 244 then
-      return 4
-    end
-  end
-
-  local symbols = {}
-  for i = 1, vim.fn.strlen(str), 1 do
-    local len = char_byte_count(str, i)
-    if len then
-      table.insert(symbols, str:sub(i, i + len - 1))
-    end
-  end
-
-  return symbols
-end
-
 ---Translate 'lhs' to 'to_lang' layout. If in 'to_lang' layout no specified `base_layout`, uses global `base_layout`
 ---To translate back to English characters, set 'to_lang' to `default` and pass the name
 ---of the layout to translate from as the third parameter.
@@ -92,7 +64,7 @@ function M.translate_keycode(lhs, to_lang, from_lang)
     layout = c.config.layouts[to_lang].layout
   end
 
-  local seq = M.split_multibyte(lhs)
+  local seq = h.split_multibyte(lhs)
   local keycode_ranges = get_keycode_ranges(seq)
   local trans_seq = {}
   local in_keycode = false
@@ -200,9 +172,9 @@ function M.trans_list(list)
 end
 
 ---Remapping each CTRL+ sequence
-function M._ctrls_remap()
+function M._map_translated_ctrls()
   local function remap_ctrl(list, from, to)
-    for _, char in ipairs(vim.fn.uniq(list)) do
+    for _, char in ipairs(list) do
       -- No use short values of modes like ' ', '!', 'l'
       local modes = c.config.ctrl_map_modes or { 'n', 'o', 'i', 'c', 't', 'v' }
       local keycode = '<C-' .. char .. '>'
@@ -228,7 +200,7 @@ function M._ctrls_remap()
     local lowers_and_special = default_layout:gsub('%u', '')
     local en_list = vim.split(lowers_and_special, '', { plain = true })
 
-    remap_ctrl(en_list, default_layout, config.layouts[lang].layout)
+    remap_ctrl(en_list, default_layout, layout.layout)
   end
 end
 

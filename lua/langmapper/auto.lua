@@ -40,7 +40,6 @@ local function collect_mappings(fn)
     for _, map in ipairs(maps) do
       if not u.lhs_forbidden(map.lhs) then
         local lhs, desc, modes = map.lhs, map.desc, handle_modes(map.mode, allowed_modes)
-        -- map.mode = handle_modes(map.mode, allowed_modes)
         table.insert(mappings, { lhs = lhs, desc = desc, mode = modes })
       end
     end
