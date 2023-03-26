@@ -14,7 +14,6 @@ describe('Langmapper: API', function()
   end
   require('langmapper').automapping()
 
-  local utils = require('langmapper.utils')
   local map = require('langmapper').map
   local del = require('langmapper').del
   local wrap_set = require('langmapper').wrap_nvim_set_keymap

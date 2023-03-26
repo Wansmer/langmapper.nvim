@@ -93,12 +93,16 @@ local function escape(str)
 end
 
 -- Recommended to use lua template string
-local en = [[qwertyuiop[]asdfghjkl;zxcvbnm,.]]
-local ru = [[йцукенгшщзхъфывапролджячсмитьбю]]
-local en_shift = [[QWERTYUIOP{}ASDFGHJKL:ZXCVBNM<>]]
-local ru_shift = [[ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЯЧСМИТЬБЮ]]
---                              | `to` should be first     | `from` should be second
-vim.opt.langmap = vim.fn.join({ escape(ru_shift) .. ';' .. escape(en_shift), escape(ru) .. ';' .. escape(en) }, ',')
+local en = [[`qwertyuiop[]asdfghjkl;'zxcvbnm]]
+local ru = [[ёйцукенгшщзхъфывапролджэячсмить]]
+local en_shift = [[~QWERTYUIOP{}ASDFGHJKL:"ZXCVBNM<>]]
+local ru_shift = [[ËЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ]]
+
+vim.opt.langmap = vim.fn.join({
+    -- | `to` should be first     | `from` should be second
+    escape(ru_shift) .. ';' .. escape(en_shift),
+    escape(ru) .. ';' .. escape(en),
+}, ',')
 ```
 
 </details>
@@ -114,7 +118,7 @@ local default_config = {
   ---@type string[] Modes to `map_all_ctrl`
   ---Here and below each mode must be specified, even if some of them extend others.
   ---E.g., 'v' includes 'x' and 's', but must be listed separate.
-  ctrl_map_modes = { 'n', 'x', 's', 'o', 'i', 'c', 't', 'v' },
+  ctrl_map_modes = { 'n', 'o', 'i', 'c', 't', 'v' },
   ---@type boolean Wrap all keymap's functions (nvim_set_keymap etc)
   hack_keymap = true,
   ---@type string[] Usually you don't want insert mode commands to be translated when hacking.

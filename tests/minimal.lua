@@ -6,6 +6,7 @@ vim.opt.shiftwidth = 2
 vim.opt.writebackup = false
 vim.opt.swapfile = false
 vim.opt.shadafile = 'NONE'
+vim.opt.showcmd = false
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ';'
 
@@ -16,6 +17,20 @@ packadd matchit
 ]])
 vim.opt.runtimepath:append(CWD)
 vim.opt.packpath = { CWD .. '.tests/site' }
+
+local function escape(str)
+  local escape_chars = [[;,."|\]]
+  return vim.fn.escape(str, escape_chars)
+end
+
+local en = [[`qwertyuiop[]asdfghjkl;'zxcvbnm]]
+local ru = [[ёйцукенгшщзхъфывапролджэячсмить]]
+local en_shift = [[~QWERTYUIOP{}ASDFGHJKL:"ZXCVBNM<>]]
+local ru_shift = [[ËЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ]]
+vim.opt.langmap = vim.fn.join({
+  escape(ru_shift) .. ';' .. escape(en_shift),
+  escape(ru) .. ';' .. escape(en),
+}, ',')
 
 local dependencies = {
   'nvim-lua/plenary.nvim',

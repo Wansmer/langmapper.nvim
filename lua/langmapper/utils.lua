@@ -14,6 +14,20 @@ local function num_to_bool(n)
   return matches[tostring(n)]
 end
 
+---Checks if a table is dict
+---@param tbl any
+---@return boolean
+local function is_dict(tbl)
+  if type(tbl) ~= 'table' then
+    return false
+  end
+
+  local keys = vim.tbl_keys(tbl)
+  return M.some(keys, function(a)
+    return type(a) ~= 'number'
+  end)
+end
+
 ---Checks if some item of list meets the condition.
 ---Empty list or non-list table, returning false.
 ---@param tbl table List-like table
@@ -50,20 +64,6 @@ function M.every(tbl, cb)
   end
 
   return true
-end
-
----Checks if a table is dict
----@param tbl any
----@return boolean
-local function is_dict(tbl)
-  if type(tbl) ~= 'table' then
-    return false
-  end
-
-  local keys = vim.tbl_keys(tbl)
-  return M.some(keys, function(a)
-    return type(a) ~= 'number'
-  end)
 end
 
 ---Update description of mapping
@@ -106,8 +106,8 @@ end
 
 function M.split_multibyte(str)
   -- From: https://neovim.discourse.group/t/how-do-you-work-with-strings-with-multibyte-characters-in-lua/2437/4
-  local function char_byte_count(str, i)
-    local char = string.byte(str, i or 1)
+  local function char_byte_count(s, i)
+    local char = string.byte(s, i or 1)
 
     -- Get byte count of unicode character (RFC 3629)
     if char > 0 and char <= 127 then
@@ -154,7 +154,6 @@ function M.translate_keycode(lhs, to_lang, from_lang)
     layout = c.config.layouts[to_lang].layout
   end
 
-  -- local seq = vim.split(lhs, '', { plain = true })
   local seq = M.split_multibyte(lhs)
   local keycode_ranges = get_keycode_ranges(seq)
   local trans_seq = {}
@@ -295,49 +294,80 @@ function M._ctrls_remap()
   end
 end
 
-function M._expand_langmap()
-  local os = vim.loop.os_uname().sysname
-  local get_layout_id = c.config.os[os] and c.config.os[os].get_current_layout_id
-  local can_check_layout = get_layout_id and type(get_layout_id) == 'function'
-
+local function check_langmap()
   -- If `langmap` contains an escaped comma, `langmap:get()` returns not correct list.
   -- That's why split it manually.
   local rg = '[^\\\\]\\zs,\\ze'
   local lm = vim.fn.join(vim.opt.langmap:get(), ',')
   local lm_list = vim.split(vim.fn.substitute(lm, rg, '!!!', 'g'), '!!!')
-  local function in_langmap(char, tr_char)
+  return function(char, tr_char)
     return M.some(lm_list, function(map)
       return map:find(char, 1, true) and map:find(tr_char, 1, true)
     end)
   end
+end
+
+local function feed_nmap(keys)
+  keys = vim.api.nvim_replace_termcodes(keys, true, true, true)
+  -- Mode always should be noremap to avoid recursion
+  vim.api.nvim_feedkeys(keys, 'n', true)
+end
+
+local function collect_variant_commands(from, to)
+  local res = {}
+  local langmap_contains = check_langmap()
+
+  for _, char in ipairs(vim.split(from, '')) do
+    local tr_char = vim.fn.tr(char, from, to)
+    if not (char == tr_char or langmap_contains(char, tr_char) or not from:find(tr_char, 1, true)) then
+      res[tr_char] = { on_layout = char, on_default = tr_char }
+    end
+  end
+
+  return res
+end
+
+function M._set_variant_commands()
+  local os = vim.loop.os_uname().sysname
+  local get_layout_id = c.config.os[os] and c.config.os[os].get_current_layout_id
+  local can_check_layout = get_layout_id and type(get_layout_id) == 'function'
+
+  if can_check_layout then
+    for _, lang in ipairs(c.config.use_layouts) do
+      local from = c.config.layouts[lang].default_layout or c.config.default_layout
+      local to = c.config.layouts[lang].layout
+
+      local to_check = collect_variant_commands(from, to)
+      if can_check_layout then
+        for key, value in pairs(to_check) do
+          vim.keymap.set('n', key, function()
+            if get_layout_id() == c.config.layouts[lang].id then
+              feed_nmap(value.on_layout)
+            else
+              feed_nmap(value.on_default)
+            end
+          end)
+        end
+      end
+    end
+  end
+end
+
+function M._set_missing_commands()
+  local langmap_contains = check_langmap()
 
   for _, lang in ipairs(c.config.use_layouts) do
-    local base = c.config.layouts[lang].default_layout or c.config.default_layout
-    local map = c.config.layouts[lang].layout
-    local base_list = vim.split(base, '', { plain = true })
-    local feed = function(keys)
-      keys = vim.api.nvim_replace_termcodes(keys, true, true, true)
-      -- Mode always should be noremap to avoid recursion
-      vim.api.nvim_feedkeys(keys, 'n', true)
-    end
+    local from = c.config.layouts[lang].default_layout or c.config.default_layout
+    local to = c.config.layouts[lang].layout
+    local base_list = vim.split(from, '', { plain = true })
 
-    for i = 1, #base do
+    for i = 1, #from do
       local char = base_list[i]
-      local tr_char = vim.fn.tr(char, base, map)
-      if char ~= tr_char and not in_langmap(char, tr_char) then
-        if not base:find(tr_char, 1, true) then
-          vim.keymap.set('n', tr_char, function()
-            feed(char)
-          end)
-        elseif can_check_layout then
-          vim.keymap.set('n', tr_char, function()
-            if get_layout_id() == c.config.layouts[lang].id then
-              feed(char)
-            else
-              feed(tr_char)
-            end
-          end, { desc = 'Langmapper: (feedkeys)' })
-        end
+      local tr_char = vim.fn.tr(char, from, to)
+      if not (char == tr_char or langmap_contains(char, tr_char) or from:find(tr_char, 1, true)) then
+        vim.keymap.set('n', tr_char, function()
+          feed_nmap(char)
+        end)
       end
     end
   end
