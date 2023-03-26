@@ -93,12 +93,16 @@ local function escape(str)
 end
 
 -- Recommended to use lua template string
-local en = [[qwertyuiop[]asdfghjkl;zxcvbnm,.]]
-local ru = [[йцукенгшщзхъфывапролджячсмитьбю]]
-local en_shift = [[QWERTYUIOP{}ASDFGHJKL:ZXCVBNM<>]]
-local ru_shift = [[ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЯЧСМИТЬБЮ]]
---                              | `to` should be first     | `from` should be second
-vim.opt.langmap = vim.fn.join({ escape(ru_shift) .. ';' .. escape(en_shift), escape(ru) .. ';' .. escape(en) }, ',')
+local en = [[`qwertyuiop[]asdfghjkl;'zxcvbnm]]
+local ru = [[ёйцукенгшщзхъфывапролджэячсмить]]
+local en_shift = [[~QWERTYUIOP{}ASDFGHJKL:"ZXCVBNM<>]]
+local ru_shift = [[ËЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ]]
+
+vim.opt.langmap = vim.fn.join({
+    -- | `to` should be first     | `from` should be second
+    escape(ru_shift) .. ';' .. escape(en_shift),
+    escape(ru) .. ';' .. escape(en),
+}, ',')
 ```
 
 </details>

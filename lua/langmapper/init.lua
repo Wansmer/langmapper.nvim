@@ -23,7 +23,8 @@ function M.setup(opts)
     return
   end
 
-  u._expand_langmap()
+  u._set_missing_commands()
+  u._set_variant_commands()
 
   if config.config.map_all_ctrl then
     u._ctrls_remap()
