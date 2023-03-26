@@ -118,7 +118,7 @@ local default_config = {
   ---@type string[] Modes to `map_all_ctrl`
   ---Here and below each mode must be specified, even if some of them extend others.
   ---E.g., 'v' includes 'x' and 's', but must be listed separate.
-  ctrl_map_modes = { 'n', 'x', 's', 'o', 'i', 'c', 't', 'v' },
+  ctrl_map_modes = { 'n', 'o', 'i', 'c', 't', 'v' },
   ---@type boolean Wrap all keymap's functions (nvim_set_keymap etc)
   hack_keymap = true,
   ---@type string[] Usually you don't want insert mode commands to be translated when hacking.
