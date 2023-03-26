@@ -1,65 +1,8 @@
 local c = require('langmapper.config')
+local h = require('langmapper.helpers')
 local keymap = vim.keymap.set
 
 local M = {}
-
-function M._bind(cb, first)
-  return function(...)
-    return cb(first, ...)
-  end
-end
-
----Checks if a table is dict
----@param tbl any
----@return boolean
-local function is_dict(tbl)
-  if type(tbl) ~= 'table' then
-    return false
-  end
-
-  local keys = vim.tbl_keys(tbl)
-  return M.some(keys, function(a)
-    return type(a) ~= 'number'
-  end)
-end
-
----Checks if some item of list meets the condition.
----Empty list or non-list table, returning false.
----@param tbl table List-like table
----@param cb function Callback for checking every item
----@return boolean
-function M.some(tbl, cb)
-  if not vim.tbl_islist(tbl) or vim.tbl_isempty(tbl) then
-    return false
-  end
-
-  for _, item in ipairs(tbl) do
-    if cb(item) then
-      return true
-    end
-  end
-
-  return false
-end
-
----Checking if every item of list meets the condition.
----Empty list or non-list table, returning false.
----@param tbl table List-like table
----@param cb function Callback for checking every item
----@return boolean
-function M.every(tbl, cb)
-  if type(tbl) ~= 'table' or not vim.tbl_islist(tbl) or vim.tbl_isempty(tbl) then
-    return false
-  end
-
-  for _, item in ipairs(tbl) do
-    if not cb(item) then
-      return false
-    end
-  end
-
-  return true
-end
 
 ---Update description of mapping
 ---@param old_desc string|nil
@@ -185,7 +128,7 @@ function M.translate_keycode(lhs, to_lang, from_lang)
   end
 
   local is_in_keycode = function(idx)
-    return M.some(keycode_ranges, function(range)
+    return h.some(keycode_ranges, function(range)
       return idx >= range[1] and idx <= range[2]
     end)
   end
@@ -231,7 +174,7 @@ function M.trans_dict(dict)
   local trans_tbl = {}
   for key, cmd in pairs(dict) do
     for _, lang in ipairs(c.config.use_layouts) do
-      trans_tbl[M.translate_keycode(key, lang)] = is_dict(cmd) and M.trans_dict(cmd) or cmd
+      trans_tbl[M.translate_keycode(key, lang)] = h.is_dict(cmd) and M.trans_dict(cmd) or cmd
     end
   end
   return vim.tbl_deep_extend('force', dict, trans_tbl)
@@ -296,7 +239,7 @@ local function check_langmap()
   local lm = vim.fn.join(vim.opt.langmap:get(), ',')
   local lm_list = vim.split(vim.fn.substitute(lm, rg, '!!!', 'g'), '!!!')
   return function(char, tr_char)
-    return M.some(lm_list, function(map)
+    return h.some(lm_list, function(map)
       return map:find(char, 1, true) and map:find(tr_char, 1, true)
     end)
   end
@@ -373,7 +316,7 @@ end
 ---@return boolean
 function M.lhs_forbidden(lhs)
   local matches = { '<plug>', '<sid>', '<snr>' }
-  return M.some(matches, function(m)
+  return h.some(matches, function(m)
     return string.lower(lhs):match(m)
   end)
 end

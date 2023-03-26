@@ -1,4 +1,5 @@
 local u = require('langmapper.utils')
+local h = require('langmapper.helpers')
 local config = require('langmapper.config')
 
 local map = vim.keymap.set
@@ -80,7 +81,7 @@ function M.del(mode, lhs, opts)
   -- Delete translated mapping for each langs in config.use_layouts
   for _, lang in ipairs(config.config.use_layouts) do
     local tr_lhs = u.translate_keycode(lhs, lang)
-    local has = u.every(mode, function(m)
+    local has = h.every(mode, function(m)
       return vim.fn.maparg(tr_lhs, m) ~= ''
     end)
 
@@ -115,7 +116,7 @@ function M.wrap_nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts)
   -- Default mapping
   M.original_buf_set_keymap(buffer, mode, lhs, rhs, opts)
   -- Translated mapping
-  u._map_for_layouts(mode, lhs, rhs, opts, u._bind(M.original_buf_set_keymap, buffer))
+  u._map_for_layouts(mode, lhs, rhs, opts, h.bind(M.original_buf_set_keymap, buffer))
 end
 
 ---Wrapper of `nvim_del_keymap` with same contract. See `:h nvim_del_keymap()`
@@ -209,7 +210,7 @@ function M._hack_nvim_buf_set_keymap(buffer, mode, lhs, rhs, opts)
   -- Skip disabled modes
   if not vim.tbl_contains(config.config.disable_hack_modes, mode) then
     -- Translated mapping
-    u._map_for_layouts(mode, lhs, rhs, opts, u._bind(M.original_buf_set_keymap, buffer))
+    u._map_for_layouts(mode, lhs, rhs, opts, h.bind(M.original_buf_set_keymap, buffer))
   end
 end
 

@@ -1,5 +1,6 @@
 local c = require('langmapper.config')
 local u = require('langmapper.utils')
+local h = require('langmapper.helpers')
 
 -- :h map-listing
 -- `v` doesn't need to expand
@@ -23,7 +24,7 @@ end
 
 ---TODO: rewrite with dict for performance
 local function has_map(lhs, mode, mappings)
-  return u.some(mappings, function(el)
+  return h.some(mappings, function(el)
     return el.lhs == lhs and vim.tbl_contains(el.mode, mode)
   end)
 end
@@ -57,8 +58,8 @@ local function automapping(scope, bufnr)
 
   local fns = {
     ['local'] = {
-      get = u._bind(vim.api.nvim_buf_get_keymap, bufnr),
-      set = u._bind(vim.api.nvim_buf_set_keymap, bufnr),
+      get = h.bind(vim.api.nvim_buf_get_keymap, bufnr),
+      set = h.bind(vim.api.nvim_buf_set_keymap, bufnr),
     },
     ['global'] = {
       get = vim.api.nvim_get_keymap,
