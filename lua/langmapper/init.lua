@@ -162,10 +162,12 @@ end
 function M.automapping(opts)
   opts = vim.tbl_extend('force', { buffer = true, global = true }, opts or {})
   if opts.global then
-    u._autoremap_global()
+    require('langmapper.auto').global_automapping()
+    -- u._autoremap_global()
   end
   if opts.buffer then
-    u._autoremap_buffer()
+    require('langmapper.auto').local_automapping()
+    -- u._autoremap_buffer()
   end
 end
 

@@ -3,15 +3,10 @@ local keymap = vim.keymap.set
 
 local M = {}
 
----Convert 0/1 to false/true
----@param n integer
----@return boolean
-local function num_to_bool(n)
-  local matches = {
-    ['0'] = false,
-    ['1'] = true,
-  }
-  return matches[tostring(n)]
+function M._bind(cb, first)
+  return function(...)
+    return cb(first, ...)
+  end
 end
 
 ---Checks if a table is dict
@@ -67,7 +62,7 @@ function M.every(tbl, cb)
 end
 
 ---Update description of mapping
----@param old_desc|nil string
+---@param old_desc string|nil
 ---@param method string
 ---@param lhs string
 ---@return string
@@ -373,51 +368,6 @@ function M._set_missing_commands()
   end
 end
 
----Collects keys/values for opts in `vim.keymap.set` with boolean values
----@param maparg table unit of result of vim.api.nvim_get_keymap()
----@param opts string[] List of target opts
----@return table<string, boolean>
-local function collect_bool_opts(maparg, opts)
-  local res = {}
-  for _, opt in ipairs(opts) do
-    if maparg[opt] then
-      res[opt] = num_to_bool(maparg[opt])
-    end
-  end
-
-  return res
-end
-
-local function collect_units(units, maparg)
-  for unit, _ in pairs(units) do
-    if unit == 'rhs' then
-      units[unit] = maparg[unit] and maparg[unit] or maparg.callback
-    elseif maparg[unit] then
-      units[unit] = maparg[unit]
-    end
-  end
-  return units
-end
-
----Convert `nvim_get_keymap()` unit to `vim.keymap.set` args and opts
----@param maparg table
----@return table
-local function to_keymap_contract(maparg)
-  local booleans = { 'expr', 'noremap', 'nowait', 'script', 'silent' }
-  local opts = vim.tbl_extend('force', {
-    buffer = maparg.buffer,
-    desc = maparg.desc,
-  }, collect_bool_opts(maparg, booleans))
-
-  if opts.noremap then
-    opts.remap = not opts.noremap
-    opts.noremap = nil
-  end
-
-  local res = { lhs = '', rhs = '', mode = '', opts = opts }
-  return collect_units(res, maparg)
-end
-
 ---Checks if lhs if forbidden
 ---@param lhs string
 ---@return boolean
@@ -426,93 +376,6 @@ function M.lhs_forbidden(lhs)
   return M.some(matches, function(m)
     return string.lower(lhs):match(m)
   end)
-end
-
----TODO: rewrite with dict for performance
----@param lhs string Translated lhs
----@param map table map-data
----@param mappings table List of mapping
----@return boolean
-local function has_map(lhs, map, mappings)
-  return M.some(mappings, function(el)
-    return el.lhs == lhs and el.mode == map.mode and el.buffer == map.opts.buffer
-  end)
-end
-
-local function automapping(scope)
-  local modes = c.config.automapping_modes or { 'n', 'v', 'x', 's' }
-  local bufnr = scope == 'buffer' and vim.api.nvim_get_current_buf() or nil
-  local mappings = {}
-
-  for _, mode in ipairs(modes) do
-    local maps = {}
-    if scope == 'buffer' then
-      maps = vim.api.nvim_buf_get_keymap(bufnr, mode)
-    else
-      maps = vim.api.nvim_get_keymap(mode)
-    end
-
-    for _, map in ipairs(maps) do
-      if vim.trim(map.mode) ~= '' and not M.lhs_forbidden(map.lhs) then
-        table.insert(mappings, map)
-      end
-    end
-  end
-
-  for _, map in ipairs(mappings) do
-    map = to_keymap_contract(map)
-    for _, lang in ipairs(c.config.use_layouts) do
-      local lhs = M.translate_keycode(map.lhs, lang)
-
-      if not has_map(lhs, map, mappings) then
-        local rhs = function()
-          local repl = vim.api.nvim_replace_termcodes(map.lhs, true, true, true)
-          vim.api.nvim_feedkeys(repl, 'm', true)
-        end
-
-        -- No need original opts because uses `nvim feedkeys()`
-        local opts = {
-          -- `bufnr` must be nill for `global` scope, otherwise the keymap will not be global
-          buffer = bufnr,
-          desc = M.update_desc(map.opts.desc, 'feedkeys', map.lhs),
-        }
-
-        local mode = map.mode
-        if #mode > 1 then
-          mode = vim.split(mode, '')
-        end
-
-        local ok, info = pcall(keymap, mode, lhs, rhs, opts)
-        if not ok then
-          vim.notify('Langmapper (autoremap):' .. info)
-        end
-      end
-    end
-  end
-end
-
----Adds translated mappings for global
-function M._autoremap_global()
-  automapping('global')
-end
-
----Adds translated mappings for buffer
-function M._autoremap_buffer()
-  vim.api.nvim_create_autocmd({ 'BufWinEnter', 'LspAttach' }, {
-    callback = function(data)
-      vim.schedule(function()
-        if vim.api.nvim_buf_is_loaded(data.buf) then
-          automapping('buffer')
-        end
-      end)
-    end,
-  })
-end
-
-function M._bind(cb, first)
-  return function(...)
-    return cb(first, ...)
-  end
 end
 
 function M._skip_disabled_modes(modes)
