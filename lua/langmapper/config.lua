@@ -72,7 +72,7 @@ local function check_layouts()
   local def_len = vim.fn.strchars(M.config.default_layout)
   for _, lang in ipairs(vim.tbl_keys(M.config.layouts)) do
     local layout = M.config.layouts[lang]
-    local len = layout.default_layout and vim.fn.strdisplaywidth(layout.default_layout) or def_len
+    local len = layout.default_layout and vim.fn.strchars(layout.default_layout) or def_len
     local l_len = vim.fn.strchars(layout.layout)
     if len ~= l_len then
       local msg =
