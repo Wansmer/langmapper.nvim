@@ -272,6 +272,10 @@ return {
 
 </details>
 
+Some other plugins that work with user input can also be hacked in this way. You
+can find some hacks or share your own it this
+[discussion](https://github.com/Wansmer/langmapper.nvim/discussions/11).
+
 ## API
 
 **Usage:**
