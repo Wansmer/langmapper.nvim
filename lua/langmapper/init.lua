@@ -178,21 +178,21 @@ local function filter_default_keymaps(mappings)
   return filtered
 end
 
+---Wrapper of `nvim_get_keymap` with same contract. See `:h nvim_get_keymap()`
+---@param mode string Mode short-name
+function M.wrap_nvim_get_keymap(mode)
+  -- All mappings
+  local mappings = M.original_get_keymap(mode)
+  -- Only latin mappings
+  return filter_default_keymaps(mappings)
+end
+
 ---Wrapper of `nvim_buf_get_keymap` with same contract. See `:h nvim_buf_get_keymap()`
 ---@param buffer integer Buffer
 ---@param mode string Mode short-name
 function M.wrap_nvim_buf_get_keymap(buffer, mode)
   -- All mappings
   local mappings = M.original_buf_get_keymap(buffer, mode)
-  -- Only latin mappings
-  return filter_default_keymaps(mappings)
-end
-
----Wrapper of `nvim_get_keymap` with same contract. See `:h nvim_get_keymap()`
----@param mode string Mode short-name
-function M.wrap_nvim_get_keymap(mode)
-  -- All mappings
-  local mappings = M.original_get_keymap(mode)
   -- Only latin mappings
   return filter_default_keymaps(mappings)
 end
