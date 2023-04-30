@@ -14,6 +14,8 @@ M.original_set_keymap = config.original_keymaps.nvim_set_keymap
 M.original_buf_set_keymap = config.original_keymaps.nvim_buf_set_keymap
 M.original_del_keymap = config.original_keymaps.nvim_del_keymap
 M.original_buf_del_keymap = config.original_keymaps.nvim_buf_del_keymap
+M.original_get_keymap = config.original_keymaps.nvim_get_keymap
+M.original_buf_get_keymap = config.original_keymaps.nvim_buf_get_keymap
 
 ---Setup langmapper
 ---@param opts? table
@@ -42,6 +44,8 @@ function M._hack_keymap()
   vim.api.nvim_buf_set_keymap = M._hack_nvim_buf_set_keymap
   vim.api.nvim_del_keymap = M.wrap_nvim_del_keymap
   vim.api.nvim_buf_del_keymap = M.wrap_nvim_buf_del_keymap
+  vim.api.nvim_get_keymap = M.wrap_nvim_get_keymap
+  vim.api.nvim_buf_get_keymap = M.wrap_nvim_buf_get_keymap
 end
 
 ---Put back all values of keymap's functions
@@ -150,6 +154,52 @@ function M.wrap_nvim_buf_del_keymap(buffer, mode, lhs)
       M.original_buf_del_keymap(buffer, mode, tr_lhs)
     end
   end
+end
+
+local function get_default_translation(lhs)
+  for _, lang in ipairs(config.config.use_layouts) do
+    local tr_lhs = u.translate_keycode(lhs, 'default', lang)
+    if tr_lhs ~= lhs then
+      return tr_lhs
+    end
+  end
+end
+
+---Wrapper of `nvim_buf_get_keymap` with same contract. See `:h nvim_buf_get_keymap()`
+---@param buffer integer Buffer
+---@param mode string Mode short-name
+function M.wrap_nvim_buf_get_keymap(buffer, mode)
+  -- All mappings
+  local mappings = M.original_buf_get_keymap(buffer, mode)
+  -- Only latin mappings
+  local filtered = {}
+
+  for _, mapping in ipairs(mappings) do
+    local lhs = mapping.lhs
+    if lhs == get_default_translation(lhs) then
+      table.insert(filtered, mapping)
+    end
+  end
+
+  return filtered
+end
+
+---Wrapper of `nvim_get_keymap` with same contract. See `:h nvim_get_keymap()`
+---@param mode string Mode short-name
+function M.wrap_nvim_get_keymap(mode)
+  -- All mappings
+  local mappings = M.original_get_keymap(mode)
+  -- Only latin mappings
+  local filtered = {}
+
+  for _, mapping in ipairs(mappings) do
+    local lhs = mapping.lhs
+    if lhs == get_default_translation(lhs) then
+      table.insert(filtered, mapping)
+    end
+  end
+
+  return filtered
 end
 
 ---Gets the output of `nvim_get_keymap` for all modes listed in the `automapping_modes`,
