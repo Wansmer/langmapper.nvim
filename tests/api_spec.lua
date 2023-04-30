@@ -1,4 +1,4 @@
-local u = require('langmapper.utils')
+local c = require('langmapper.config')
 local h = require('langmapper.helpers')
 
 describe('Langmapper: API', function()
@@ -68,7 +68,7 @@ describe('Langmapper: API', function()
         key = key:gsub('<localleader>', vim.g.maplocalleader)
       end
 
-      local buf_maps = vim.api.nvim_buf_get_keymap(bufnr, 'n')
+      local buf_maps = c.original_keymaps.nvim_buf_get_keymap(bufnr, 'n')
 
       local has_orig = h.some(buf_maps, function(unit)
         return key:gsub('<leader>|<localleader>', ' ') == unit.lhs
@@ -91,7 +91,7 @@ describe('Langmapper: API', function()
         key = key:gsub('<localleader>', vim.g.maplocalleader)
       end
 
-      local buf_maps = vim.api.nvim_buf_get_keymap(bufnr, 'n')
+      local buf_maps = c.original_keymaps.nvim_buf_get_keymap(bufnr, 'n')
 
       local has_orig = h.some(buf_maps, function(unit)
         return key:gsub('<leader>|<localleader>', ' ') == unit.lhs
