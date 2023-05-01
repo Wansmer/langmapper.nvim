@@ -57,11 +57,11 @@ local function automapping(scope, bufnr)
 
   local fns = {
     ['local'] = {
-      get = h.bind(vim.api.nvim_buf_get_keymap, bufnr),
+      get = h.bind(c.original_keymaps.nvim_buf_get_keymap, bufnr),
       set = h.bind(vim.api.nvim_buf_set_keymap, bufnr),
     },
     ['global'] = {
-      get = vim.api.nvim_get_keymap,
+      get = c.original_keymaps.nvim_get_keymap,
       set = vim.api.nvim_set_keymap,
     },
   }

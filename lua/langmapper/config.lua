@@ -104,6 +104,8 @@ M.original_keymaps = {
   nvim_buf_set_keymap = vim.api.nvim_buf_set_keymap,
   nvim_del_keymap = vim.api.nvim_del_keymap,
   nvim_buf_del_keymap = vim.api.nvim_buf_del_keymap,
+  nvim_get_keymap = vim.api.nvim_get_keymap,
+  nvim_buf_get_keymap = vim.api.nvim_buf_get_keymap,
 }
 
 return M
