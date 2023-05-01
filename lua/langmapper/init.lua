@@ -163,6 +163,7 @@ local function get_default_translation(lhs)
       return tr_lhs
     end
   end
+  return lhs
 end
 
 local function filter_default_keymaps(mappings)
