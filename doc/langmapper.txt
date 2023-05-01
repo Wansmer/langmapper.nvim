@@ -350,6 +350,24 @@ as is.
 <
 
 
+HACK_GET_KEYMAP() ~
+
+Hack `get_keymap` functions. See `:h nvim_set_keymap()` and `:h
+nvim_buf_set_keymap()`.
+
+After this hack, `nvim_set_keymap/nvim_buf_set_keymap` will return **only**
+latin mappings (without translated mappings). Very useful for work with
+`nvim-cmp` (see 8 <https://github.com/Wansmer/langmapper.nvim/issues/8>)
+
+**Usage:**
+
+>lua
+    local langmapper = require("langmapper")
+    langmapper.setup()
+    langmapper.hack_get_keymap()
+<
+
+
 OTHER ~
 
 Original keymap’s functions, that were wrap with translates functions if
