@@ -44,6 +44,10 @@ function M._hack_keymap()
   vim.api.nvim_buf_set_keymap = M._hack_nvim_buf_set_keymap
   vim.api.nvim_del_keymap = M.wrap_nvim_del_keymap
   vim.api.nvim_buf_del_keymap = M.wrap_nvim_buf_del_keymap
+end
+
+---Hack `get_keymap` functions. See `:h nvim_set_keymap()` and `:h nvim_buf_set_keymap()`
+function M.hack_get_keymap()
   vim.api.nvim_get_keymap = M.wrap_nvim_get_keymap
   vim.api.nvim_buf_get_keymap = M.wrap_nvim_buf_get_keymap
 end
