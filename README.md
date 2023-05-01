@@ -347,6 +347,22 @@ function M.map(mode, lhs, rhs, opts)
 function M.del(mode, lhs, opts)
 ```
 
+### `hack_get_keymap()`
+
+Hack `get_keymap` functions. See `:h nvim_set_keymap()` and `:h nvim_buf_set_keymap()`.
+
+After this hack, `nvim_set_keymap/nvim_buf_set_keymap` will return **only**
+latin mappings (without translated mappings). Very useful for work with
+`nvim-cmp` (see [#8](https://github.com/Wansmer/langmapper.nvim/issues/8))
+
+**Usage:**
+
+```lua
+local langmapper = require("langmapper")
+langmapper.setup()
+langmapper.hack_get_keymap()
+```
+
 ### Other
 
 Original keymap's functions, that were wrap with translates functions if
