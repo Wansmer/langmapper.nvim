@@ -175,7 +175,7 @@ local function filter_default_keymaps(mappings)
 
   for _, mapping in ipairs(mappings) do
     local lhs = mapping.lhs
-    if lhs == get_default_translation(lhs) then
+    if lhs:lower() == get_default_translation(lhs):lower() then
       table.insert(filtered, mapping)
     end
   end
