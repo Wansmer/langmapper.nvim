@@ -1,4 +1,4 @@
-*langmapper.txt*          For Neovim >= 0.8.0         Last change: 2023 May 01
+*langmapper.txt*         For Neovim >= 0.8.0         Last change: 2023 July 31
 
 ==============================================================================
 Table of Contents                               *langmapper-table-of-contents*
@@ -20,7 +20,6 @@ A plugin that makes Neovim more friendly to non-English input methods
 
 TLDR                                              *langmapper-langmapper-tldr*
 
-
 - Translatingall globally registered mappings;
 - Translating local registered mappings for each buffer;
 - Registering translated mappings for all built-in CTRL+ sequence;
@@ -30,7 +29,6 @@ TLDR                                              *langmapper-langmapper-tldr*
 
 
 REQUIREMENTS                              *langmapper-langmapper-requirements*
-
 
 - Neovim 0.8+ <https://github.com/neovim/neovim/releases>
 - CLI utility to determine the current input method _(optional)_
