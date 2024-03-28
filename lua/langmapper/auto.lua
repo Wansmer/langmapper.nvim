@@ -72,7 +72,9 @@ local function automapping(scope, bufnr)
     for _, map in ipairs(mappings) do
       local lhs = u.translate_keycode(map.lhs, lang)
       for _, mode in ipairs(map.mode) do
-        if not (map.lhs == lhs or has_map(lhs, mode, mappings)) then
+        -- Prevent recursion on ctrl-keys. E.g. both layouts contains the same keys. See: #23
+        local is_same = vim.startswith(lhs:lower(), '<c-') and lhs:lower() == map.lhs:lower() or lhs == map.lhs
+        if not (is_same or has_map(lhs, mode, mappings)) then
           local rhs = function()
             local repl = vim.api.nvim_replace_termcodes(map.lhs, true, true, true)
             vim.api.nvim_feedkeys(repl, 'm', true)
