@@ -1,4 +1,4 @@
-*langmapper.txt*         For Neovim >= 0.8.0         Last change: 2023 July 31
+*langmapper.txt*         For Neovim >= 0.8.0        Last change: 2024 March 28
 
 ==============================================================================
 Table of Contents                               *langmapper-table-of-contents*
@@ -147,7 +147,7 @@ Show default config ~
             local cmd = 'im-select'
             if vim.fn.executable(cmd) then
               local output = vim.split(vim.trim(vim.fn.system(cmd)), '\n')
-              return output[output]
+              return output[#output]
             end
           end,
         },
@@ -350,12 +350,12 @@ as is.
 
 HACK_GET_KEYMAP() ~
 
-Hack `get_keymap` functions. See `:h nvim_set_keymap()` and `:h
-nvim_buf_set_keymap()`.
+Hack `get_keymap` functions. See |nvim_set_keymap()| and
+|nvim_buf_set_keymap()|.
 
 After this hack, `nvim_set_keymap/nvim_buf_set_keymap` will return **only**
 latin mappings (without translated mappings). Very useful for work with
-`nvim-cmp` (see 8 <https://github.com/Wansmer/langmapper.nvim/issues/8>)
+`nvim-cmp` (see #8 <https://github.com/Wansmer/langmapper.nvim/issues/8>)
 
 **Usage:**
 
