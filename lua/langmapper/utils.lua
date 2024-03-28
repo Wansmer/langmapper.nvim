@@ -183,7 +183,7 @@ function M._map_translated_ctrls()
       local tr_keycode = '<C-' .. tr_char .. '>'
       local desc = M.update_desc(nil, 'feedkeys', keycode)
       -- Prevent recursion
-      if not from:find(tr_char, 1, true) then
+      if not from:find(tr_char, 1, true) and not char == tr_char then
         local term_keycodes = vim.api.nvim_replace_termcodes(keycode, true, true, true)
         keymap(modes, tr_keycode, function()
           vim.api.nvim_feedkeys(term_keycodes, 'm', true)
