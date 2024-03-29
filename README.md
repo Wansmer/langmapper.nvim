@@ -330,7 +330,9 @@ and `vim.keymap.set('n', '<leader>ф', ':echo 123')`.
 
 `lhs` with `<Plug>`, `<Sid>` and `<Snr>` will not translate and will be mapped as is.
 
-`del()` works in the same way, but with mappings removing.
+`del()` works in the same way, but with mappings removing. Also, `del()` is
+wrapped with a safetely call (`pcall`) to avoid errors on duplicate characters
+(helpful when using`nvim-cmp`).
 
 ```lua
 ---@param mode string|table Same mode short names as |nvim_set_keymap()|
