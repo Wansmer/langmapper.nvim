@@ -131,14 +131,14 @@ end
 ---@param mode string Mode short-name
 ---@param lhs string Left-hand-side |{lhs}| of the mapping.
 function M.wrap_nvim_del_keymap(mode, lhs)
-  M.original_del_keymap(mode, lhs)
+  pcall(M.original_del_keymap, mode, lhs)
   -- Delete translated mapping for each langs in config.use_layouts
   for _, lang in ipairs(config.config.use_layouts) do
     local tr_lhs = u.translate_keycode(lhs, lang)
     local has = vim.fn.maparg(tr_lhs, mode) ~= ''
 
     if tr_lhs ~= lhs and has then
-      M.original_del_keymap(mode, tr_lhs)
+      pcall(M.original_del_keymap, mode, tr_lhs)
     end
   end
 end
@@ -148,14 +148,14 @@ end
 ---@param mode string Mode short-name
 ---@param lhs string Left-hand-side |{lhs}| of the mapping.
 function M.wrap_nvim_buf_del_keymap(buffer, mode, lhs)
-  M.original_buf_del_keymap(buffer, mode, lhs)
+  pcall(M.original_buf_del_keymap, buffer, mode, lhs)
   -- Delete translated mapping for each langs in config.use_layouts
   for _, lang in ipairs(config.config.use_layouts) do
     local tr_lhs = u.translate_keycode(lhs, lang)
     local has = vim.fn.maparg(tr_lhs, mode) ~= ''
 
     if tr_lhs ~= lhs and has then
-      M.original_buf_del_keymap(buffer, mode, tr_lhs)
+      pcall(M.original_buf_del_keymap, buffer, mode, tr_lhs)
     end
   end
 end
