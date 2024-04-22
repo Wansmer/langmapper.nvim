@@ -1,5 +1,7 @@
 local M = {}
 
+M.is_list = vim.fn.has('nvim-0.10') == 1 and vim.islist or vim.tbl_islist
+
 ---Bind first param to function
 ---@param cb function
 ---@param first any First param
@@ -18,7 +20,7 @@ function M.is_dict(tbl)
     return false
   end
 
-  return not vim.tbl_islist(tbl)
+  return not M.is_list(tbl)
 end
 
 ---Checks if some item of list meets the condition.
@@ -27,7 +29,7 @@ end
 ---@param cb function Callback for checking every item
 ---@return boolean
 function M.some(tbl, cb)
-  if not vim.tbl_islist(tbl) or vim.tbl_isempty(tbl) then
+  if not M.is_list(tbl) or vim.tbl_isempty(tbl) then
     return false
   end
 
@@ -46,7 +48,7 @@ end
 ---@param cb function Callback for checking every item
 ---@return boolean
 function M.every(tbl, cb)
-  if type(tbl) ~= 'table' or not vim.tbl_islist(tbl) or vim.tbl_isempty(tbl) then
+  if type(tbl) ~= 'table' or not M.is_list(tbl) or vim.tbl_isempty(tbl) then
     return false
   end
 
