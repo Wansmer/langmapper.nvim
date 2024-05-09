@@ -221,7 +221,7 @@ local function feed_nmap(keys)
   keys = vim.api.nvim_replace_termcodes(keys, true, true, true)
   -- Mode always should be noremap to avoid recursion
   local count = vim.v.count > 0 and vim.v.count or ''
-  vim.api.nvim_feedkeys(count .. keys, 'nix', true)
+  vim.api.nvim_feedkeys(count .. keys, 'n', true)
 end
 
 local function collect_variant_commands(from, to)
