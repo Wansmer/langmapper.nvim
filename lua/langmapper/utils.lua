@@ -220,7 +220,8 @@ end
 local function feed_nmap(keys)
   keys = vim.api.nvim_replace_termcodes(keys, true, true, true)
   -- Mode always should be noremap to avoid recursion
-  vim.api.nvim_feedkeys(keys, 'n', true)
+  local count = vim.v.count > 0 and vim.v.count or ''
+  vim.api.nvim_feedkeys(count .. keys, 'nix', true)
 end
 
 local function collect_variant_commands(from, to)
@@ -242,23 +243,23 @@ function M._set_variant_commands()
   local get_layout_id = c.config.os[os] and c.config.os[os].get_current_layout_id
   local can_check_layout = get_layout_id and type(get_layout_id) == 'function'
 
-  if can_check_layout then
-    for _, lang in ipairs(c.config.use_layouts) do
-      local from = c.config.layouts[lang].default_layout or c.config.default_layout
-      local to = c.config.layouts[lang].layout
+  if not can_check_layout then
+    return
+  end
 
-      local to_check = collect_variant_commands(from, to)
-      if can_check_layout then
-        for key, value in pairs(to_check) do
-          vim.keymap.set('n', key, function()
-            if get_layout_id() == c.config.layouts[lang].id then
-              feed_nmap(value.on_layout)
-            else
-              feed_nmap(value.on_default)
-            end
-          end)
+  for _, lang in ipairs(c.config.use_layouts) do
+    local from = c.config.layouts[lang].default_layout or c.config.default_layout
+    local to = c.config.layouts[lang].layout
+
+    local to_check = collect_variant_commands(from, to)
+    for key, value in pairs(to_check) do
+      vim.keymap.set('n', key, function()
+        if get_layout_id() == c.config.layouts[lang].id then
+          feed_nmap(value.on_layout)
+        else
+          feed_nmap(value.on_default)
         end
-      end
+      end)
     end
   end
 end
