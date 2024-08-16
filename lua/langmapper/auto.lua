@@ -77,7 +77,7 @@ local function automapping(scope, bufnr)
         if not (is_same or has_map(lhs, mode, mappings)) then
           local rhs = function()
             local repl = vim.api.nvim_replace_termcodes(map.lhs, true, true, true)
-            vim.api.nvim_feedkeys(repl, 'm', true)
+            vim.api.nvim_feedkeys((vim.v.count == 0 and '' or vim.v.count) .. repl, 'm', true)
           end
 
           -- No need original opts because uses `nvim_feedkeys()`
