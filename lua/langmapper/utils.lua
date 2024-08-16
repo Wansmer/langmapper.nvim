@@ -186,7 +186,8 @@ function M._map_translated_ctrls()
       if not from:find(tr_char, 1, true) then
         local term_keycodes = vim.api.nvim_replace_termcodes(keycode, true, true, true)
         keymap(modes, tr_keycode, function()
-          vim.api.nvim_feedkeys(term_keycodes, 'm', true)
+          local count = vim.v.count == 0 and '' or vim.v.count
+          vim.api.nvim_feedkeys(count .. term_keycodes, 'm', true)
         end, { desc = desc })
       end
     end
