@@ -1,4 +1,4 @@
-*langmapper.txt*        For Neovim >= 0.8.0        Last change: 2024 August 16
+*langmapper.txt*       For Neovim >= 0.8.0      Last change: 2024 September 14
 
 ==============================================================================
 Table of Contents                               *langmapper-table-of-contents*
