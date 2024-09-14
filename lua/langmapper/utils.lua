@@ -192,8 +192,7 @@ function M._map_translated_ctrls()
       if not from:find(tr_char, 1, true) then
         local term_keycodes = vim.api.nvim_replace_termcodes(keycode, true, true, true)
         keymap(modes, tr_keycode, function()
-          local count = vim.v.count == 0 and '' or vim.v.count
-          vim.api.nvim_feedkeys(count .. term_keycodes, 'm', true)
+          vim.api.nvim_feedkeys(M.feed_with_count(term_keycodes), 'm', true)
         end, { desc = desc })
       end
     end
@@ -226,9 +225,7 @@ end
 
 local function feed_nmap(keys)
   keys = vim.api.nvim_replace_termcodes(keys, true, true, true)
-  -- Mode always should be noremap to avoid recursion
-  local count = vim.v.count > 0 and vim.v.count or ''
-  vim.api.nvim_feedkeys(count .. keys, 'n', true)
+  vim.api.nvim_feedkeys(M.feed_with_count(keys), 'n', true)
 end
 
 local function collect_variant_commands(from, to)
