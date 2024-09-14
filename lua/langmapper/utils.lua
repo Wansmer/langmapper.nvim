@@ -171,6 +171,12 @@ function M.trans_list(list)
   return trans_list
 end
 
+function M.feed_with_count(keys)
+  local modes = { 'c', 'o', 'i' } -- ignore count on this modes
+  local count = (vim.v.count == 0 or vim.tbl_contains(modes, vim.fn.mode())) and '' or vim.v.count
+  return count .. keys
+end
+
 ---Remapping each CTRL+ sequence
 function M._map_translated_ctrls()
   local function remap_ctrl(list, from, to)
