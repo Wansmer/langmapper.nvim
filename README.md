@@ -8,11 +8,11 @@ A plugin that makes Neovim more friendly to non-English input methods 🤝
 
 - [TLDR](#tldr)
 - [Requirements](#requirements)
-- [Instalation](#instalation)
+- [Installation](#instalation)
 - [Settings](#settings)
 - [Usage](#usage)
   - [Simple](#simple)
-  - [Manualy](#manualy)
+  - [Manually](#manualy)
   - [Using with `folke/which-key.nvim`](#using-with-folkewhich-keynvim)
 - [API](#api)
 - [Utils](#utils)
@@ -24,7 +24,7 @@ A plugin that makes Neovim more friendly to non-English input methods 🤝
 
 - Translating all globally registered mappings;
 - Translating local registered mappings for each buffer;
-- Registering translated mappings for all built-in CTRL+ sequence;
+- Registering translated mappings for all built-in CTRL+ sequences;
 - Provides utils for manual registration original and translated mapping with single function;
 - Hacks built-in keymap's methods to translate all registered mappings (including mappings from lazy-loaded plugins);
 - Real-time normal mode command processing variability depending on the input method.
@@ -42,7 +42,7 @@ A plugin that makes Neovim more friendly to non-English input methods 🤝
 > - [im-select](https://github.com/daipeihust/im-select) for Mac and Windows
 > - [xkb-switch](https://github.com/grwlf/xkb-switch) for Linux
 
-## Instalation
+## Installation
 
 With [Lazy.nvim](https://github.com/folke/lazy.nvim):
 
@@ -182,7 +182,7 @@ If you need to handle built-in and vim script mappings too, call the
 `langmapper.automapping({ buffer = false })` function at the very end of
 your `init.lua`. (buffer to `false`, because `nvim_buf_set_keymap` already hacked 😎)
 
-### Manualy
+### Manually
 
 Set up your `layout` in config, set `hack_keymap` to false,
 and call `langmapper.setup(opts)`.
@@ -190,7 +190,7 @@ and call `langmapper.setup(opts)`.
 #### For regular mapping:
 
 ```lua
--- this function complitely repeat contract of vim.keymap.set
+-- this function completely repeats contract of vim.keymap.set
 local map = require('langmapper').map
 
 map('n', '<Leader>e', '<Cmd>Neotree toggle focus<Cr>')
@@ -299,7 +299,7 @@ outputting `nvim_buf_get_keymap` for each open buffer.
 Must be called at the very end of `init.lua`, after all plugins have been loaded
 and all key bindings have been set.
 
-This function also handles mappings made via wim script.
+This function also handles mappings made via vim script.
 
 Does not handle mappings for lazy-loaded plugins. To avoid it, see
 `hack_keymap`.
@@ -367,7 +367,7 @@ langmapper.hack_get_keymap()
 
 ### Other
 
-Original keymap's functions, that were wrap with translates functions if
+Original keymap's functions, that were wrapped with translation functions if
 `hack_keymap` is `true`:
 
 ```lua
