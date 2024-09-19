@@ -1,4 +1,4 @@
-*langmapper.txt*       For Neovim >= 0.8.0      Last change: 2024 September 14
+*langmapper.txt*       For Neovim >= 0.8.0      Last change: 2024 September 19
 
 ==============================================================================
 Table of Contents                               *langmapper-table-of-contents*
@@ -6,7 +6,7 @@ Table of Contents                               *langmapper-table-of-contents*
 1. Langmapper                                          |langmapper-langmapper|
   - TLDR                                          |langmapper-langmapper-tldr|
   - Requirements                          |langmapper-langmapper-requirements|
-  - Instalation                            |langmapper-langmapper-instalation|
+  - Installation                          |langmapper-langmapper-installation|
   - Settings                                  |langmapper-langmapper-settings|
   - Usage                                        |langmapper-langmapper-usage|
   - API                                            |langmapper-langmapper-api|
@@ -22,7 +22,7 @@ TLDR                                              *langmapper-langmapper-tldr*
 
 - Translatingall globally registered mappings;
 - Translating local registered mappings for each buffer;
-- Registering translated mappings for all built-in CTRL+ sequence;
+- Registering translated mappings for all built-in CTRL+ sequences;
 - Provides utils for manual registration original and translated mapping with single function;
 - Hacks built-in keymap’s methods to translate all registered mappings (including mappings from lazy-loaded plugins);
 - Real-time normal mode command processing variability depending on the input method.
@@ -41,7 +41,7 @@ REQUIREMENTS                              *langmapper-langmapper-requirements*
   - im-select <https://github.com/daipeihust/im-select> for Mac and Windows
   - xkb-switch <https://github.com/grwlf/xkb-switch> for Linux
 
-INSTALATION                                *langmapper-langmapper-instalation*
+INSTALLATION                              *langmapper-langmapper-installation*
 
 With Lazy.nvim <https://github.com/folke/lazy.nvim>
 
@@ -177,7 +177,7 @@ If you need to handle built-in and vim script mappings too, call the
 `init.lua`. (buffer to `false`, because `nvim_buf_set_keymap` already hacked )
 
 
-MANUALY ~
+MANUALLY ~
 
 Set up your `layout` in config, set `hack_keymap` to false, and call
 `langmapper.setup(opts)`.
@@ -186,7 +186,7 @@ Set up your `layout` in config, set `hack_keymap` to false, and call
 FOR REGULAR MAPPING:
 
 >lua
-    -- this function complitely repeat contract of vim.keymap.set
+    -- this function completely repeats contract of vim.keymap.set
     local map = require('langmapper').map
     
     map('n', '<Leader>e', '<Cmd>Neotree toggle focus<Cr>')
@@ -296,7 +296,7 @@ outputting `nvim_buf_get_keymap` for each open buffer.
 Must be called at the very end of `init.lua`, after all plugins have been
 loaded and all key bindings have been set.
 
-This function also handles mappings made via wim script.
+This function also handles mappings made via vim script.
 
 Does not handle mappings for lazy-loaded plugins. To avoid it, see
 `hack_keymap`.
@@ -370,7 +370,7 @@ latin mappings (without translated mappings). Very useful for work with
 
 OTHER ~
 
-Original keymap’s functions, that were wrap with translates functions if
+Original keymap’s functions, that were wrapped with translation functions if
 `hack_keymap` is `true`
 
 >lua
