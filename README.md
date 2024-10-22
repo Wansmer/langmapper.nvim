@@ -131,6 +131,13 @@ local default_config = {
   ---@type string[] Names of layouts. If empty, will handle all configured layouts.
   use_layouts = {},
   ---@type table Fallback layouts
+  ---Custom description builder:
+  ---  old_desc - original description,
+  ---  method - 'translate' (map translated lhs) or 'feedkeys' (call `nvim_feedkeys` with original lhs)
+  ---  lhs - original left-hand side for translation
+  ---should return new description as a string. If error is occurs or non-string is returned, original builder with `LM ()` prefix will use
+  ---@type nil|function(old_desc, method, lhs): string
+  custom_desc = nil,
   layouts = {
     ---@type table Fallback layout item. Name of key is a name of language
     ru = {

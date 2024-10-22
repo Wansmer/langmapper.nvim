@@ -10,6 +10,13 @@ local M = {}
 ---@param lhs string
 ---@return string
 function M.update_desc(old_desc, method, lhs)
+  if c.config.custom_desc and type(c.config.custom_desc) == 'function' then
+    local ok, new_desc = pcall(c.config.custom_desc, old_desc, method, lhs)
+    if ok and type(new_desc) == 'string' then
+      return new_desc
+    end
+  end
+
   old_desc = old_desc and old_desc or ''
   local pack = old_desc ~= '' and old_desc .. ' ' or ''
   local new_desc = pack .. 'LM (' .. method .. ' ' .. '"' .. lhs .. '")'

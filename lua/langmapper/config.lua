@@ -14,10 +14,17 @@ M.config = {
   disable_hack_modes = { 'i' },
   ---@type table Modes whose mappings will be checked during automapping.
   automapping_modes = { 'n', 'v', 'x', 's' },
-  ---@type string Standart English layout (on Mac, It may be different in your case.)
+  ---@type string Standard English layout (on Mac, It may be different in your case.)
   default_layout = [[~QWERTYUIOP{}|ASDFGHJKL:"ZXCVBNM<>?`qwertyuiop[]asdfghjkl;'zxcvbnm,./]],
   ---@type string[] Names of layouts. If empty, will handle all configured layouts.
   use_layouts = {},
+  ---Custom description builder:
+  ---  old_desc - original description,
+  ---  method - 'translate' (map translated lhs) or 'feedkeys' (call `nvim_feedkeys` with original lhs)
+  ---  lhs - original left-hand side for translation
+  ---should return new description as a string. If error is occurs or non-string is returned, original builder with `LM ()` prefix will use
+  ---@type nil|function(old_desc, method, lhs): string
+  custom_desc = nil,
   ---@type table Fallback layouts
   layouts = {
     ---@type table Fallback layout item. Name of key is a name of language
