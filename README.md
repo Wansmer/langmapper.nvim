@@ -13,7 +13,7 @@ A plugin that makes Neovim more friendly to non-English input methods 🤝
 - [Usage](#usage)
   - [Simple](#simple)
   - [Manually](#manualy)
-  - [Using with `folke/which-key.nvim`](#using-with-folkewhich-keynvim)
+  - [How to use with `X` plugin](#how-to-use-with-x-plugin)
 - [API](#api)
 - [Utils](#utils)
 <!--toc:end-->
@@ -229,59 +229,10 @@ But it cannot handle mappings of lazy loaded plugins.
 > NOTE: all keys, that you're using in `keys = {}` in `lazy.nvim` also will be
 > translated.
 
-### Using with `folke/which-key.nvim`
+### How to use with `X` plugin
 
-`which-key` uses `nvim_feedkeys` to execute the sequence entered by the user.
-This imposes restrictions on the execution of commands related to operators,
-text objects and movements, since `nvim_feedkeys` does not handle the value
-of your `vim.opt.langmap`. Therefore, the entered sequence must be
-translated back into English characters.
-
-[Here](https://github.com/Wansmer/LazyWithLangmapper) example how to integrate
-Langmapper to LazyNvim.
-
-<details>
-
-<summary>Configuration example:</summary>
-
-```lua
-return {
-  'folke/which-key.nvim',
-  enabled = true,
-  dependencies = { 'Wansmer/langmapper.nvim' },
-  config = function()
-    vim.o.timeout = true
-    vim.o.timeoutlen = 300
-
-    local lmu = require('langmapper.utils')
-    local view = require('which-key.view')
-    local execute = view.execute
-
-    -- wrap `execute()` and translate sequence back
-    view.execute = function(prefix_i, mode, buf)
-      -- Translate back to English characters
-      prefix_i = lmu.translate_keycode(prefix_i, 'default', 'ru')
-      execute(prefix_i, mode, buf)
-    end
-
-    -- If you want to see translated operators, text objects and motions in
-    -- which-key prompt
-    -- local presets = require('which-key.plugins.presets')
-    -- presets.operators = lmu.trans_dict(presets.operators)
-    -- presets.objects = lmu.trans_dict(presets.objects)
-    -- presets.motions = lmu.trans_dict(presets.motions)
-    -- etc
-
-    require('which-key').setup()
-  end,
-}
-```
-
-</details>
-
-Some other plugins that work with user input can also be hacked in this way. You
-can find some hacks or share your own it this
-[discussion](https://github.com/Wansmer/langmapper.nvim/discussions/11).
+Check out the issues and [discussions](https://github.com/Wansmer/langmapper.nvim/discussions/11).
+There is probably already a recipe for the plugin you need.
 
 ## API
 
