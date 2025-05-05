@@ -47,8 +47,8 @@ M.config = {
       ---@return string
       get_current_layout_id = function()
         local cmd = 'im-select'
-        if vim.fn.executable(cmd) then
-          local output = vim.split(vim.trim(vim.fn.system(cmd)), '\n')
+        if vim.fn.executable(cmd) ~= 0 then
+          local output = vim.split(vim.system({ cmd }):wait().stdout, '\n')
           return output[#output]
         end
       end,
