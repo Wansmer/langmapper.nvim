@@ -223,6 +223,9 @@ local function check_langmap()
   local rg = '[^\\\\]\\zs,\\ze'
   local lm = vim.fn.join(vim.opt.langmap:get(), ',')
   local lm_list = vim.split(vim.fn.substitute(lm, rg, '!!!', 'g'), '!!!')
+  for index, item in pairs(lm_list) do
+    lm_list[index] = vim.fn.substitute(item, [[[^\\]\zs;\ze]], '', '')
+  end
   return function(char, tr_char)
     return h.some(lm_list, function(map)
       return map:find(char, 1, true) and map:find(tr_char, 1, true)
