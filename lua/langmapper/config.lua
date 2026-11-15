@@ -49,7 +49,7 @@ M.config = {
         local cmd = 'im-select'
         if vim.fn.executable(cmd) ~= 0 then
           local output = vim.split(vim.system({ cmd }):wait().stdout, '\n')
-          return output[#output]
+          return output[1]
         end
       end,
     },
@@ -83,7 +83,7 @@ local function check_layouts()
     local l_len = vim.fn.strchars(layout.layout)
     if len ~= l_len then
       local msg =
-        'Langmapper: "default_layout" and "layout" contain different number of characters. Check your config for "%s".'
+      'Langmapper: "default_layout" and "layout" contain different number of characters. Check your config for "%s".'
       error(msg:format(lang), 0)
     end
   end
