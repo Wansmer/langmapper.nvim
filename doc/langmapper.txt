@@ -1,4 +1,5 @@
-*langmapper.txt*         For Neovim >= 0.8.0        Last change: 2026 March 24
+*langmapper.txt*
+                          For Neovim >= 0.8.0    Last change: 2026 November 15
 
 ==============================================================================
 Table of Contents                               *langmapper-table-of-contents*
@@ -20,7 +21,7 @@ A plugin that makes Neovim more friendly to non-English input methods
 
 TLDR                                              *langmapper-langmapper-tldr*
 
-- Translatingall globally registered mappings;
+- Translating all globally registered mappings;
 - Translating local registered mappings for each buffer;
 - Registering translated mappings for all built-in CTRL+ sequences;
 - Provides utils for manual registration original and translated mapping with single function;
@@ -89,13 +90,13 @@ Show example of `vim.opt.langmap` ~
       local escape_chars = [[;,."|\]]
       return vim.fn.escape(str, escape_chars)
     end
-    
+
     -- Recommended to use lua template string
     local en = [[`qwertyuiop[]asdfghjkl;'zxcvbnm]]
     local ru = [[ёйцукенгшщзхъфывапролджэячсмить]]
     local en_shift = [[~QWERTYUIOP{}ASDFGHJKL:"ZXCVBNM<>]]
     local ru_shift = [[ËЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ]]
-    
+
     vim.opt.langmap = vim.fn.join({
         -- | `to` should be first     | `from` should be second
         escape(ru_shift) .. ';' .. escape(en_shift),
@@ -195,7 +196,7 @@ FOR REGULAR MAPPING:
 >lua
     -- this function completely repeats contract of vim.keymap.set
     local map = require('langmapper').map
-    
+
     map('n', '<Leader>e', '<Cmd>Neotree toggle focus<Cr>')
 <
 
@@ -241,7 +242,7 @@ API                                                *langmapper-langmapper-api*
 
 >lua
     local langmapper = require('langmapper')
-    
+
     langmapper.map(...)
     langmapper.automapping(...)
     -- etc
@@ -276,7 +277,7 @@ Does not handle mappings for lazy-loaded plugins. To avoid it, see
 
 MAP()/DEL() ~
 
-Wrappers of `vim.keymap.set`  `vim.keymap.del` with same contract.
+Wrappers of `vim.keymap.set` `vim.keymap.del` with same contract.
 
 `map()` - Sets the given `lhs`, then translates it to the configured input
 methods, and maps it with the same options.
@@ -303,7 +304,7 @@ wrapped with a safetely call (`pcall`) to avoid errors on duplicate characters
     ---@param rhs string|function Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
     ---@param opts table|nil A table of |:map-arguments|.
     function M.map(mode, lhs, rhs, opts)
-    
+
     ---@param mode string|table Same mode short names as |nvim_set_keymap()|
     ---@param lhs string Left-hand side |{lhs}| of the mapping.
     ---@param opts table|nil A table of optional arguments:
